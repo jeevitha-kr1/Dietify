@@ -1,0 +1,155 @@
+.reg-page {
+  height: 100vh;
+  overflow: hidden;              /* ✅ prevents full page scroll */
+  background: #f6f6ee;           /* ✅ same as Home bg */
+  display: flex;
+  flex-direction: column;
+}
+
+/* top bar */
+.reg-topbar {
+  height: 70px;
+  background: #ffffff;           /* ✅ clean white */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reg-brand {
+  font-weight: 900;
+  letter-spacing: 2px;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.reg-brand-black { color: #0b0f0a; }           /* ✅ near-black */
+.reg-brand-blue { color: #1f6b3a; margin-left: 6px; } /* ✅ green main */
+
+/* center card */
+.reg-wrap {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+/* card */
+.reg-card {
+  width: min(560px, 94vw);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 22px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.12);
+  padding: 18px 18px 16px;
+
+  /* ✅ card never exceeds viewport */
+  max-height: calc(100vh - 70px - 24px);
+  overflow: auto; /* if screen small, scroll inside card */
+}
+
+.reg-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 900;
+  color: #0b0f0a; /* ✅ */
+}
+
+.reg-subtitle {
+  margin: 10px 0 14px;
+  color: rgba(11, 15, 10, 0.70); /* ✅ muted like Home */
+}
+
+.reg-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.reg-tab {
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: #fff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+/* ✅ active tab uses green tint */
+.reg-tab.active {
+  border-color: rgba(31, 107, 58, 0.35);
+  background: rgba(31, 107, 58, 0.12);
+}
+
+.reg-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reg-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 900;
+  color: #0b0f0a;
+}
+
+.reg-input {
+  padding: 14px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.10);
+  outline: none;
+  font-size: 1rem;
+  background: #fff;
+}
+
+/* ✅ focus ring uses green */
+.reg-input:focus {
+  border-color: #1f6b3a;
+  box-shadow: 0 0 0 3px rgba(31, 107, 58, 0.16);
+}
+
+.reg-hint {
+  font-weight: 600;
+  color: rgba(11, 15, 10, 0.65);
+  font-size: 0.9rem;
+}
+
+/* ✅ primary button uses green (modern) */
+.reg-primary {
+  margin-top: 8px;
+  border: none;
+  border-radius: 999px;
+  padding: 14px 18px;
+  font-weight: 900;
+  cursor: pointer;
+  background: #1f6b3a; /* ✅ green main */
+  color: #fff;
+  box-shadow: 0 16px 36px rgba(0,0,0,0.18);
+}
+
+.reg-primary:hover {
+  background: #164d2a; /* ✅ dark green hover */
+}
+
+/* ✅ toast uses same green */
+.reg-toast {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f6b3a;
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.18);
+  z-index: 999;
+  max-width: 92vw;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .reg-title { font-size: 1.6rem; }
+  .reg-card { padding: 16px; }
+}
