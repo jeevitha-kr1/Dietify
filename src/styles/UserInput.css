@@ -1,0 +1,165 @@
+.steps-page {
+  height: 100vh;
+  overflow: hidden; /* prevent full-page scroll */
+  background: #f6f6ee;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.steps-card {
+  width: min(450px, 92vw);
+  max-height: 85vh;
+  overflow-y: auto;
+
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.steps-title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.steps-progress {
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 10px;
+  margin-bottom: 25px;
+  overflow: hidden;
+}
+
+.steps-progress-bar {
+  height: 100%;
+  background: #2f6f3e;
+  transition: 0.3s ease;
+}
+
+.steps-content h3 {
+  margin-bottom: 15px;
+}
+
+.steps-subtitle {
+  margin-top: -8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #444;
+}
+
+.steps-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin-bottom: 20px;
+}
+
+.steps-btn-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.steps-pill {
+  flex: 1;
+  padding: 10px;
+  border-radius: 30px;
+  border: 1px solid #2f6f3e;
+  background: white;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.steps-pill:hover {
+  background: #2f6f3e;
+  color: white;
+}
+
+.steps-pill.active {
+  background: #2f6f3e;
+  color: white;
+  border-color: #2f6f3e;
+}
+
+.steps-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.steps-primary {
+  background: #2f6f3e;
+  color: white;
+  padding: 10px 25px;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+}
+
+.steps-secondary {
+  background: transparent;
+  border: 1px solid #ccc;
+  padding: 10px 25px;
+  border-radius: 30px;
+  cursor: pointer;
+}
+
+.steps-error {
+  color: #d32f2f;
+  font-size: 14px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+/* Allergies */
+.steps-allergy-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 12px;
+  margin-bottom: 20px;
+}
+
+.steps-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  cursor: pointer;
+  background: #fafafa;
+}
+
+.steps-checkbox input {
+  accent-color: #2f6f3e;
+  width: 16px;
+  height: 16px;
+}
+
+/* 2 columns on wider screens */
+@media (min-width: 520px) {
+  .steps-allergy-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Mobile tweaks */
+@media (max-width: 480px) {
+  .steps-card {
+    padding: 22px;
+  }
+
+  .steps-btn-row {
+    flex-direction: column;
+  }
+
+  .steps-primary,
+  .steps-secondary {
+    flex: 1;
+    width: 100%;
+  }
+}

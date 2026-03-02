@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import AboutUs from "./pages/AboutUs";
 import Registration from "./pages/Registration";
-import SevenSteps from "./pages/SevenSteps";
+import UserInput from "./pages/UserInput";
 import Result from "./pages/Result";
 
 export default function App() {
@@ -19,8 +19,8 @@ export default function App() {
         {/* Registration page */}
         <Route path="/registration" element={<Registration />} />
 
-        {/* 7 steps */}
-        <Route path="/steps" element={<SevenSteps />} />
+        {/* User Input page */}
+        <Route path="/steps" element={<UserInput />} />
 
         {/* Result page */}
         <Route path="/result" element={<Result />} />
