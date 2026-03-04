@@ -1,94 +1,246 @@
-/* =========================================================
-   GLOBAL THEME (Dynamic + Responsive)
-   - Minimal reset
-   - Theme tokens (cream + green)
-   - Reusable helpers: container, card, btn
-   ========================================================= */
+/* ===========================
+   DIETIFY GLOBAL THEME
+   =========================== */
 
-/* Reset */
-* { box-sizing: border-box; }
-html, body { height: 100%; }
+/* 1) CSS Reset-ish */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  color: var(--text);
-  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* Theme tokens */
+/* 2) Theme tokens */
 :root {
-  /* colors */
-  --bg: rgb(244, 247, 217);              /* cream */
-  --surface: rgba(255, 255, 255, 0.78);  /* glass card */
-  --text: #394d33;                       /* near-black */
-  --muted: rgba(11, 15, 10, 0.72);
+  /* Typography */
+  --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+    Arial, "Apple Color Emoji", "Segoe UI Emoji";
 
-  /* brand */
-  --accent: rgb(107, 140, 58);           /* green */
-  --accent-dark: rgb(78, 110, 36);
+  /* Background + glass */
+  --bg-dark: #07140d;
+  --glass: rgba(255, 255, 255, 0.10);
+  --glass-2: rgba(255, 255, 255, 0.14);
+  --border: rgba(255, 255, 255, 0.18);
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
 
-  /* UI */
-  --border: rgba(11, 15, 10, 0.12);
-  --shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+  /* Text */
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.78);
+  --muted-2: rgba(255, 255, 255, 0.62);
 
-  /* fluid spacing */
-  --space-1: clamp(6px, 1vw, 10px);
-  --space-2: clamp(10px, 1.5vw, 16px);
-  --space-3: clamp(14px, 2vw, 22px);
-  --space-4: clamp(18px, 3vw, 30px);
-  --space-5: clamp(22px, 4vw, 44px);
+  /* Accent (Dietify vibe) */
+  --accent-1: rgba(66, 245, 173, 0.95); /* mint */
+  --accent-2: rgba(255, 209, 102, 0.90); /* warm yellow */
+  --accent-3: rgba(0, 210, 255, 0.55); /* blue blob */
 
-  /* fluid typography */
-  --logo-size: clamp(3rem, 6vw, 4.8rem);
-  --h1: clamp(2rem, 4.5vw, 3.4rem);
-  --body: clamp(1rem, 1.1vw, 1.1rem);
-  --small: clamp(0.85rem, 0.95vw, 0.95rem);
+  /* Surfaces */
+  --surface: rgba(0, 0, 0, 0.20);
+  --surface-2: rgba(0, 0, 0, 0.28);
 
-  /* radius */
-  --r-lg: 22px;
-  --r-pill: 999px;
+  /* Radius */
+  --r-xl: 22px;
+  --r-lg: 16px;
+  --r-md: 14px;
+
+  /* Focus */
+  --focus: rgba(66, 245, 173, 0.45);
+
+  /* Spacing */
+  --pad: 18px;
 }
 
-/* =========================================================
-   Reusable helpers (use these across pages)
-   ========================================================= */
+/* 3) Base styles */
+body {
+  font-family: var(--font);
+  background: var(--bg-dark);
+  color: var(--text);
+}
 
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* 4) Scrollbar (optional, subtle) */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.06);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.20);
+}
+
+/* 5) Reusable utilities (use anywhere) */
 .container {
-  width: min(1100px, 92vw);
+  width: min(1150px, 92vw);
   margin: 0 auto;
 }
 
-.card {
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
+  border-radius: var(--r-xl);
+}
+
+.surface {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  box-shadow: var(--shadow);
 }
 
-/* Buttons */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+/* 6) Unified inputs */
+.input {
+  height: 44px;
+  width: 100%;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: #fff;
+  padding: 0 12px;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--muted-2);
+}
+
+.input:focus {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px rgba(66, 245, 173, 0.18);
+}
+
+/* 7) Unified buttons */
 .btn {
+  height: 46px;
+  padding: 0 18px;
   border: none;
-  border-radius: var(--r-pill);
-  padding: 12px 18px;
-  font-weight: 800;
+  border-radius: var(--r-md);
   cursor: pointer;
-  transition: transform 120ms ease, opacity 120ms ease;
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  transition: transform 120ms ease, opacity 120ms ease, box-shadow 120ms ease;
 }
 
-.btn:hover { opacity: 0.95; }
-.btn:active { transform: scale(0.99); }
+.btn:active {
+  transform: translateY(1px);
+}
 
-.btn-dark {
-  background: #0b0f0a;
+.btn-primary {
+  color: #062014;
+  background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
+}
+
+.btn-secondary {
   color: #fff;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--border);
 }
 
-.btn-accent {
-  background: var(--accent);
+.btn-ghost {
   color: #fff;
+  background: transparent;
+  border: 1px solid var(--border);
 }
 
-.btn-accent:hover {
-  background: var(--accent-dark);
+.btn:hover {
+  opacity: 0.98;
+  transform: translateY(-1px);
+}
+
+/* 8) Focus visibility (keyboard) */
+:focus-visible {
+  outline: 3px solid rgba(66, 245, 173, 0.35);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+/* 9) Toast base (optional helper) */
+.toast {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 50;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+}
+
+.toast-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.toast.success .toast-dot {
+  background: var(--accent-1);
+}
+.toast.error .toast-dot {
+  background: rgba(255, 120, 120, 0.95);
+}
+
+/* 10) Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 11) Mobile tweaks */
+@media (max-width: 520px) {
+  :root {
+    --pad: 14px;
+  }
 }

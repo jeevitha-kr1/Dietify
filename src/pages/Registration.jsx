@@ -1,14 +1,12 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { parsePhoneNumberFromString } from "libphonenumber-js"; 
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 import "../styles/Registration.css";
 
 export default function Registration() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // gender: state first, then localStorage fallback (refresh-safe)
-  // We store it so refresh doesn't lose the chosen gender.
   const gender = useMemo(() => {
     const g = location?.state?.gender;
     if (g) {
@@ -19,9 +17,18 @@ export default function Registration() {
   }, [location]);
 
   const [mode, setMode] = useState("register");
-  const [toast, setToast] = useState({ show: false, message: "" });
+  const [toast, setToast] = useState({ show: false, message: "", type: "info" });
 
-  // Country list must include ISO codes (DE/IN/US...) for libphonenumber-js
+  const [passwordError, setPasswordError] = useState("");
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+
+  const [shake, setShake] = useState(false);
+  const triggerShake = () => {
+    setShake(true);
+    setTimeout(() => setShake(false), 450);
+  };
+
   const COUNTRY_CODES = [
     { iso: "DE", code: "+49", label: "Germany", flag: "🇩🇪" },
     { iso: "IN", code: "+91", label: "India", flag: "🇮🇳" },
@@ -30,249 +37,244 @@ export default function Registration() {
     { iso: "AE", code: "+971", label: "UAE", flag: "🇦🇪" },
   ];
 
-  //  Display this to user (what special characters are allowed)
-  const ALLOWED_SPECIALS =
-    `! @ # $ % ^ & * ( ) _ + - = [ ] { } ; : ' " , . ? / \\ | \` ~ < >`;
-
-  //  Registration form state
   const [reg, setReg] = useState({
     firstName: "",
     lastName: "",
     email: "",
     countryIso: "DE",
     countryCode: "+49",
-    phoneNumber: "", // user types national number (digits), we validate per selected country
+    phoneNumber: "",
     password: "",
   });
 
-  //  Login form state
   const [login, setLogin] = useState({
-    identifier: "", // can be email OR international phone (+...)
+    identifier: "",
     password: "",
   });
 
-  //  Toast helper
-  const showToast = (message) => {
-    setToast({ show: true, message });
-    setTimeout(() => setToast({ show: false, message: "" }), 2400);
+  const showToast = (message, type = "info") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: "", type: "info" }), 2400);
   };
 
-  // -------------------------
-  //  Validation helpers
-  // -------------------------
   const isValidName = (name) => /^[A-Za-z ]{2,40}$/.test(name.trim());
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
 
-  const isValidEmail = (email) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
-
-  //  For login: allow international phone format OR email
-  // Example: +4915123456789
   const isValidIdentifier = (value) => {
     const v = value.trim();
     return isValidEmail(v) || /^\+\d{7,15}$/.test(v);
   };
 
-  // Password rules:
-  // - at least 6 characters
-  // - must include 1 letter, 1 number, 1 special char from allowed set
   const validatePassword = (pw) => {
     if (!pw || pw.length < 6) return "Password must be at least 6 characters.";
-
-    const hasLetter = /[A-Za-z]/.test(pw);
-    const hasNumber = /\d/.test(pw);
-    const hasSpecial = /[!@#$%^&*()_+\-=[\]{};:'",.?/\\|`~<>]/.test(pw);
-
-    if (!hasLetter) return "Password must include at least 1 letter (A–Z).";
-    if (!hasNumber) return "Password must include at least 1 number (0–9).";
-    if (!hasSpecial)
-      return `Password must include at least 1 special character. Allowed: ${ALLOWED_SPECIALS}`;
-
+    if (!/[A-Za-z]/.test(pw)) return "Include at least one letter.";
+    if (!/\d/.test(pw)) return "Include at least one number.";
+    if (!/[!@#$%^&*()_+\-=[\]{};:'",.?/\\|`~<>]/.test(pw))
+      return "Include at least one special character.";
     return "";
   };
 
-  // Phone validation based on selected country
-  // We parse the national number using the selected ISO code, then check validity.
-  // If valid, we store E.164 format (best): +4915123456789
+  const passwordRules = useMemo(() => {
+    const pw = reg.password || "";
+    return [
+      { ok: pw.length >= 6, label: "At least 6 characters" },
+      { ok: /[A-Za-z]/.test(pw), label: "At least 1 letter" },
+      { ok: /\d/.test(pw), label: "At least 1 number" },
+      { ok: /[!@#$%^&*()_+\-=[\]{};:'",.?/\\|`~<>]/.test(pw), label: "At least 1 special character" },
+    ];
+  }, [reg.password]);
+
   const validatePhoneByCountry = (countryIso, nationalNumber) => {
     const digits = (nationalNumber || "").replace(/[^\d]/g, "");
-    if (!digits) return { ok: false, message: "Please enter your phone number." };
+    if (!digits) return { ok: false, message: "Enter your phone number." };
 
     const phone = parsePhoneNumberFromString(digits, countryIso);
-    if (!phone)
-      return {
-        ok: false,
-        message: "Phone number format looks invalid for the selected country.",
-      };
+    if (!phone || !phone.isValid())
+      return { ok: false, message: "Invalid phone number for selected country." };
 
-    if (!phone.isValid())
-      return {
-        ok: false,
-        message: "Invalid phone number for the selected country.",
-      };
-
-    return { ok: true, e164: phone.number }; // Example: +4915123456789
+    return { ok: true, e164: phone.number };
   };
 
-  // -------------------------
-  // Register handler
-  // -------------------------
   const handleRegister = (e) => {
     e.preventDefault();
 
-    // Validate names/email
-    if (!isValidName(reg.firstName))
-      return showToast("Please enter a valid First Name (letters only).");
-    if (!isValidName(reg.lastName))
-      return showToast("Please enter a valid Last Name (letters only).");
-    if (!isValidEmail(reg.email))
-      return showToast("Please enter a valid Email ID.");
+    if (!isValidName(reg.firstName)) {
+      triggerShake();
+      return showToast("Enter a valid first name.", "error");
+    }
+    if (!isValidName(reg.lastName)) {
+      triggerShake();
+      return showToast("Enter a valid last name.", "error");
+    }
+    if (!isValidEmail(reg.email)) {
+      triggerShake();
+      return showToast("Enter a valid email.", "error");
+    }
 
-    // Validate phone based on selected country
     const phoneCheck = validatePhoneByCountry(reg.countryIso, reg.phoneNumber);
-    if (!phoneCheck.ok) return showToast(phoneCheck.message);
+    if (!phoneCheck.ok) {
+      triggerShake();
+      return showToast(phoneCheck.message, "error");
+    }
 
-    //  Validate password
     const pwError = validatePassword(reg.password);
-    if (pwError) return showToast(pwError);
+    if (pwError) {
+      setPasswordError(pwError);
+      triggerShake();
+      return showToast(pwError, "error");
+    }
 
-    //  Store data in localStorage (for demo only)
-    // WHERE IT IS STORED:
-    // - localStorage key: "dietify_user"
-    // WHAT IS STORED:
-    // - email, phone (E.164), password, and profile fields
-    // HOW LOGIN USES IT:
-    // - login.identifier must match saved.email OR saved.phone
-    // - login.password must match saved.password
     localStorage.setItem(
       "dietify_user",
       JSON.stringify({
         firstName: reg.firstName.trim(),
         lastName: reg.lastName.trim(),
         email: reg.email.trim(),
-        phone: phoneCheck.e164, //  store phone as E.164
+        phone: phoneCheck.e164,
         password: reg.password,
         gender,
       })
     );
 
-    showToast("Profile created! Now login.");
-
-    //  Switch to login mode
+    showToast("Profile created ✅ Now login to continue.", "success");
     setMode("login");
     setLogin({ identifier: reg.email.trim(), password: "" });
   };
 
-  // -------------------------
-  // Login handler
-  // -------------------------
   const handleLogin = (e) => {
     e.preventDefault();
 
-    if (!isValidIdentifier(login.identifier))
-      return showToast("Enter a valid Email or Phone (Example: +4915123456789).");
+    if (!isValidIdentifier(login.identifier)) {
+      triggerShake();
+      return showToast("Enter Email or Phone (e.g. +491234...).", "error");
+    }
 
-    const pwError = validatePassword(login.password);
-    if (pwError) return showToast(pwError);
-
-    //  Read stored profile
     const saved = JSON.parse(localStorage.getItem("dietify_user") || "null");
-    if (!saved) return showToast("No profile found. Please sign up first.");
+    if (!saved) {
+      triggerShake();
+      return showToast("No profile found. Please create one first.", "error");
+    }
 
-    // Compare identifier with saved email OR saved phone
-    const id = login.identifier.trim();
-    const okId = id === saved.email || id === saved.phone;
-
-    //  Compare password
+    const okId = login.identifier.trim() === saved.email || login.identifier.trim() === saved.phone;
     const okPw = login.password === saved.password;
 
-    if (!okId || !okPw) return showToast("Incorrect credentials. Please try again.");
+    if (!okId || !okPw) {
+      triggerShake();
+      return showToast("Incorrect credentials.", "error");
+    }
 
-    showToast("Login successful ");
-
-    // Go to steps page after login
-    setTimeout(() => {
-      navigate("/steps");
-    }, 1000);
+    showToast("Welcome back ✅", "success");
+    setTimeout(() => navigate("/steps"), 900);
   };
 
-  // -------------------------
-  //  UI
-  // -------------------------
+  const handlePasswordChange = (value) => {
+    setReg({ ...reg, password: value });
+    setPasswordError(validatePassword(value));
+  };
+
+  useEffect(() => {
+    setPasswordError("");
+  }, [mode]);
+
   return (
-    <div className="reg-page">
-      {toast.show && <div className="reg-toast">{toast.message}</div>}
+    <div className="reg-hero">
+      <div className="reg-blobs" aria-hidden="true">
+        <span className="blob b1" />
+        <span className="blob b2" />
+        <span className="blob b3" />
+      </div>
 
-      <header className="reg-topbar">
-        <div className="reg-brand">
-          <span className="reg-brand-black">HEALTHY</span>
-          <span className="reg-brand-blue">BODY</span>
+      {toast.show && (
+        <div className={`reg-toast ${toast.type}`}>
+          <span className="reg-toast-dot" />
+          <span>{toast.message}</span>
         </div>
-      </header>
+      )}
 
-      <div className="reg-wrap">
-        <div className="reg-card">
-          <h1 className="reg-title">{mode === "register" ? "Create Profile" : "Login"}</h1>
+      <div className="reg-shell">
+        <main className={`reg-card ${shake ? "shake" : ""}`}>
+          <div className="reg-top">
+            <div className="reg-step-badge">
+              {mode === "register" ? "Let’s get to know you" : "Welcome back"}
+            </div>
 
-          <div className="reg-tabs">
-            <button
-              type="button"
-              className={`reg-tab ${mode === "register" ? "active" : ""}`}
-              onClick={() => setMode("register")}
-            >
-              Sign Up
-            </button>
+            <h1 className="reg-title">{mode === "register" ? "Create your profile" : "Login to continue"}</h1>
 
-            <button
-              type="button"
-              className={`reg-tab ${mode === "login" ? "active" : ""}`}
-              onClick={() => setMode("login")}
-            >
-              Login
-            </button>
+            <p className="reg-subtitle">
+              {mode === "register"
+                ? "Answer a few basics so Dietify can personalize your meal recommendations and help you build a healthier lifestyle. Your profile also helps you track progress over time."
+                : "Login to continue your plan and tracking."}
+            </p>
+
+            {mode === "register" && (
+              <div className="reg-benefits">
+                <div className="reg-benefit">🎯 Personalized recommendations</div>
+                <div className="reg-benefit">🗓️ Weekly planning made easy</div>
+                <div className="reg-benefit">📈 Track your progress</div>
+              </div>
+            )}
+
+            <div className="reg-tabs" role="tablist" aria-label="Auth tabs">
+              <button
+                type="button"
+                className={`reg-tab ${mode === "register" ? "active" : ""}`}
+                onClick={() => setMode("register")}
+              >
+                Sign up
+              </button>
+              <button
+                type="button"
+                className={`reg-tab ${mode === "login" ? "active" : ""}`}
+                onClick={() => setMode("login")}
+              >
+                Login
+              </button>
+            </div>
           </div>
 
-          {/* ------------------------- */}
-          {/* SIGN UP FORM */}
-          {/* ------------------------- */}
           {mode === "register" && (
             <form className="reg-form" onSubmit={handleRegister}>
-              <label className="reg-label">
-                First Name
-                <input
-                  className="reg-input"
-                  value={reg.firstName}
-                  onChange={(e) => setReg({ ...reg, firstName: e.target.value })}
-                  placeholder="" 
-                />
-              </label>
+              <div className="reg-grid">
+                <label className="reg-label">
+                  First name
+                  <input
+                    className="reg-input"
+                    value={reg.firstName}
+                    placeholder="Your first name"
+                    onChange={(e) => setReg({ ...reg, firstName: e.target.value })}
+                    autoComplete="given-name"
+                  />
+                </label>
+
+                <label className="reg-label">
+                  Last name
+                  <input
+                    className="reg-input"
+                    value={reg.lastName}
+                    placeholder="Your last name"
+                    onChange={(e) => setReg({ ...reg, lastName: e.target.value })}
+                    autoComplete="family-name"
+                  />
+                </label>
+              </div>
 
               <label className="reg-label">
-                Last Name
-                <input
-                  className="reg-input"
-                  value={reg.lastName}
-                  onChange={(e) => setReg({ ...reg, lastName: e.target.value })}
-                  placeholder="" 
-                />
-              </label>
-
-              <label className="reg-label">
-                Email ID
+                Email
                 <input
                   className="reg-input"
                   value={reg.email}
+                  placeholder="you@example.com"
                   onChange={(e) => setReg({ ...reg, email: e.target.value })}
-                  placeholder="" 
+                  autoComplete="email"
+                  type="email"
                 />
               </label>
 
               <label className="reg-label">
                 Phone
-                {/*  Country select + flag */}
-                <div style={{ display: "flex", gap: 10 }}>
+                <div className="reg-phone-row">
                   <select
-                    className="reg-input"
-                    style={{ width: 170 }}
+                    className="reg-input reg-select"
                     value={reg.countryIso}
                     onChange={(e) => {
                       const selected = COUNTRY_CODES.find((c) => c.iso === e.target.value);
@@ -290,86 +292,111 @@ export default function Registration() {
                     ))}
                   </select>
 
-                  {/* national number input (digits only), validated per selected country */}
                   <input
                     className="reg-input"
                     value={reg.phoneNumber}
+                    placeholder="Digits only"
                     onChange={(e) => {
                       const digitsOnly = e.target.value.replace(/[^\d]/g, "");
                       setReg({ ...reg, phoneNumber: digitsOnly });
                     }}
-                    placeholder="" 
                     inputMode="numeric"
+                    autoComplete="tel-national"
                   />
                 </div>
 
-                <small className="reg-hint">
-                 
-                  (example: <strong>+4915123456789</strong>).
-                </small>
-              </label>
-
-              <label className="reg-label">
-                Password (min 6 characters)
-                <input
-                  className="reg-input"
-                  value={reg.password}
-                  onChange={(e) => setReg({ ...reg, password: e.target.value })}
-                  placeholder="" 
-                />
-                <small className="reg-hint">
-                  {/* Must include: <strong>1 letter</strong>, <strong>1 number</strong>, and <strong>1 special</strong>.
-                  <br />
-                  Allowed special characters: <strong>{ALLOWED_SPECIALS}</strong> */}
-                </small>
-              </label>
-
-              <button className="reg-primary" type="submit">
-                Create Profile
-              </button>
-            </form>
-          )}
-
-          {/* ------------------------- */}
-          {/*  LOGIN FORM */}
-          {/* ------------------------- */}
-          {mode === "login" && (
-            <form className="reg-form" onSubmit={handleLogin}>
-              <label className="reg-label">
-                Email or Phone
-                <input
-                  className="reg-input"
-                  value={login.identifier}
-                  onChange={(e) => setLogin({ ...login, identifier: e.target.value })}
-                  placeholder="" 
-                />
-                <small className="reg-hint">
-                  Phone login must be in international format like <strong>+4915123456789</strong>.
-                </small>
+                <small className="reg-helper">We validate based on the selected country.</small>
               </label>
 
               <label className="reg-label">
                 Password
+                <div className="reg-pass-wrap">
+                  <input
+                    className="reg-input"
+                    value={reg.password}
+                    onChange={(e) => handlePasswordChange(e.target.value)}
+                    type={showRegPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    placeholder="Create a strong password"
+                  />
+                  <button
+                    type="button"
+                    className="reg-eye"
+                    onClick={() => setShowRegPassword((s) => !s)}
+                    aria-label={showRegPassword ? "Hide password" : "Show password"}
+                  >
+                    {showRegPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+
+                <div className="reg-rules">
+                  {passwordRules.map((r) => (
+                    <div key={r.label} className={`reg-rule ${r.ok ? "ok" : ""}`}>
+                      <span className="dot" />
+                      <span>{r.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {passwordError && <small className="reg-error">{passwordError}</small>}
+              </label>
+
+              <button className="reg-primary" type="submit">
+                Create profile
+              </button>
+
+              <p className="reg-footnote">Demo build: credentials are saved locally for testing.</p>
+            </form>
+          )}
+
+          {mode === "login" && (
+            <form className="reg-form" onSubmit={handleLogin}>
+              <label className="reg-label">
+                Email or phone
                 <input
                   className="reg-input"
-                  value={login.password}
-                  onChange={(e) => setLogin({ ...login, password: e.target.value })}
-                  placeholder="" 
+                  value={login.identifier}
+                  placeholder="Email or +49123456789"
+                  onChange={(e) => setLogin({ ...login, identifier: e.target.value })}
+                  autoComplete="username"
                 />
-                <small className="reg-hint">
-                  Must include: <strong>1 letter</strong>, <strong>1 number</strong>, and <strong>1 special</strong>.
-                  <br />
-                  Allowed special characters: <strong>{ALLOWED_SPECIALS}</strong>
-                </small>
+              </label>
+
+              <label className="reg-label">
+                Password
+                <div className="reg-pass-wrap">
+                  <input
+                    className="reg-input"
+                    value={login.password}
+                    onChange={(e) => setLogin({ ...login, password: e.target.value })}
+                    type={showLoginPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    placeholder="Your password"
+                  />
+                  <button
+                    type="button"
+                    className="reg-eye"
+                    onClick={() => setShowLoginPassword((s) => !s)}
+                    aria-label={showLoginPassword ? "Hide password" : "Show password"}
+                  >
+                    {showLoginPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
               </label>
 
               <button className="reg-primary" type="submit">
                 Login
               </button>
 
+              <div className="reg-switch">
+                Don’t have an account?{" "}
+                <button type="button" className="reg-link" onClick={() => setMode("register")}>
+                  Create one
+                </button>
+              </div>
             </form>
           )}
-        </div>
+        </main>
       </div>
     </div>
   );

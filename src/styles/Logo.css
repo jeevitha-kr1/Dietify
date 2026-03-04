@@ -1,0 +1,72 @@
+.lg-hero {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+
+  background:
+    linear-gradient(135deg, rgba(10, 20, 12, 0.85), rgba(10, 20, 12, 0.55)),
+    url("https://images.unsplash.com/photo-1543353071-873f17a7a088?auto=format&fit=crop&w=2400&q=80");
+  background-size: cover;
+  background-position: center;
+  color: rgba(255,255,255,0.92);
+}
+
+.lg-blobs .blob{
+  position:absolute; filter:blur(44px); opacity:.45; border-radius:999px;
+  animation: floaty 9s ease-in-out infinite;
+}
+.lg-blobs .b1{ width:360px; height:360px; left:-140px; top:-140px; background:rgba(66,245,173,.75); }
+.lg-blobs .b2{ width:470px; height:470px; right:-190px; top:120px; background:rgba(0,210,255,.55); animation-delay:1.3s; }
+.lg-blobs .b3{ width:420px; height:420px; left:18%; bottom:-210px; background:rgba(255,209,102,.55); animation-delay:2.8s; }
+
+@keyframes floaty{
+  0%,100%{ transform:translateY(0) translateX(0) scale(1); }
+  50%{ transform:translateY(-18px) translateX(12px) scale(1.05); }
+}
+
+.lg-center{
+  min-height:100vh; display:grid; place-items:center; padding:18px;
+  position:relative; z-index:2;
+}
+
+.lg-card{
+  width:min(520px,92vw);
+  padding:28px 22px;
+  border-radius:24px;
+  background:rgba(255,255,255,0.10);
+  border:1px solid rgba(255,255,255,0.20);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 22px 60px rgba(0,0,0,0.35);
+  display:flex; flex-direction:column; align-items:center; gap:12px;
+  animation: popIn 650ms ease-out both;
+}
+
+@keyframes popIn{ 0%{opacity:0; transform:scale(.92);} 100%{opacity:1; transform:scale(1);} }
+
+.lg-mark{
+  width:86px; height:86px; border-radius:24px; display:grid; place-items:center;
+  background:rgba(0,0,0,0.22);
+  border:1px solid rgba(255,255,255,0.18);
+  font-size:2.2rem;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.05);} }
+
+.lg-word{ text-align:center; }
+.lg-title{ font-weight:900; font-size:2.2rem; margin:0; }
+.lg-sub{ opacity:.85; margin-top:6px; }
+
+.lg-dots{ display:flex; gap:8px; margin-top:8px; }
+.lg-dots span{
+  width:8px; height:8px; border-radius:999px;
+  background:rgba(255,255,255,0.85);
+  animation:bounce 900ms infinite ease-in-out;
+}
+.lg-dots span:nth-child(2){ animation-delay:140ms; }
+.lg-dots span:nth-child(3){ animation-delay:280ms; }
+@keyframes bounce{ 0%,100%{transform:translateY(0); opacity:.65;} 50%{transform:translateY(-8px); opacity:1;} }
+
+.lg-footer{
+  position:fixed; bottom:22px; width:100%; display:grid; place-items:center;
+  opacity:.78; font-size:.95rem; padding:0 16px; text-align:center; z-index:2;
+}
