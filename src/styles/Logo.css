@@ -70,3 +70,12 @@
   position:fixed; bottom:22px; width:100%; display:grid; place-items:center;
   opacity:.78; font-size:.95rem; padding:0 16px; text-align:center; z-index:2;
 }
+/* Accessibility: respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .lg-blobs .blob,
+  .lg-mark,
+  .lg-dots span,
+  .lg-card {
+    animation: none !important;
+  }
+}

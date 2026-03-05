@@ -3,10 +3,14 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 import "../styles/Registration.css";
 
+// ✅ Demo auth (stores ONLY salt+hash, never raw password)
+import { registerUser, verifyLogin } from "../utils/auth/demoAuth";
+
 export default function Registration() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // ✅ Persist gender across refresh (safe for demo)
   const gender = useMemo(() => {
     const g = location?.state?.gender;
     if (g) {
@@ -22,6 +26,9 @@ export default function Registration() {
   const [passwordError, setPasswordError] = useState("");
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
+
+  // ✅ Remember me
+  const [rememberMe, setRememberMe] = useState(false);
 
   const [shake, setShake] = useState(false);
   const triggerShake = () => {
@@ -57,9 +64,11 @@ export default function Registration() {
     setTimeout(() => setToast({ show: false, message: "", type: "info" }), 2400);
   };
 
+  // ===== Validators =====
   const isValidName = (name) => /^[A-Za-z ]{2,40}$/.test(name.trim());
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
 
+  // login identifier can be email OR E.164 phone (+49...)
   const isValidIdentifier = (value) => {
     const v = value.trim();
     return isValidEmail(v) || /^\+\d{7,15}$/.test(v);
@@ -84,6 +93,7 @@ export default function Registration() {
     ];
   }, [reg.password]);
 
+  // Country-aware phone validation using libphonenumber-js
   const validatePhoneByCountry = (countryIso, nationalNumber) => {
     const digits = (nationalNumber || "").replace(/[^\d]/g, "");
     if (!digits) return { ok: false, message: "Enter your phone number." };
@@ -92,10 +102,20 @@ export default function Registration() {
     if (!phone || !phone.isValid())
       return { ok: false, message: "Invalid phone number for selected country." };
 
-    return { ok: true, e164: phone.number };
+    return { ok: true, e164: phone.number }; // e.g. +491234...
   };
 
-  const handleRegister = (e) => {
+  const handlePasswordChange = (value) => {
+    setReg((prev) => ({ ...prev, password: value }));
+    setPasswordError(validatePassword(value));
+  };
+
+  useEffect(() => {
+    setPasswordError("");
+  }, [mode]);
+
+  // ===== Submit handlers =====
+  const handleRegister = async (e) => {
     e.preventDefault();
 
     if (!isValidName(reg.firstName)) {
@@ -124,24 +144,30 @@ export default function Registration() {
       return showToast(pwError, "error");
     }
 
-    localStorage.setItem(
-      "dietify_user",
-      JSON.stringify({
+    try {
+      // ✅ Stores only salt+hash (NOT the raw password)
+      await registerUser({
         firstName: reg.firstName.trim(),
         lastName: reg.lastName.trim(),
         email: reg.email.trim(),
         phone: phoneCheck.e164,
-        password: reg.password,
         gender,
-      })
-    );
+        password: reg.password,
+      });
 
-    showToast("Profile created ✅ Now login to continue.", "success");
-    setMode("login");
-    setLogin({ identifier: reg.email.trim(), password: "" });
+      showToast("Profile created ✅ Now login to continue.", "success");
+      setMode("login");
+      setLogin({ identifier: reg.email.trim(), password: "" });
+      setReg((prev) => ({ ...prev, password: "" })); // clear password field
+      setShowRegPassword(false);
+    } catch (err) {
+      console.error(err);
+      triggerShake();
+      showToast("Something went wrong. Please try again.", "error");
+    }
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
     if (!isValidIdentifier(login.identifier)) {
@@ -149,35 +175,41 @@ export default function Registration() {
       return showToast("Enter Email or Phone (e.g. +491234...).", "error");
     }
 
-    const saved = JSON.parse(localStorage.getItem("dietify_user") || "null");
-    if (!saved) {
+    try {
+      const result = await verifyLogin({
+        identifier: login.identifier.trim(),
+        password: login.password,
+      });
+
+      if (!result.ok) {
+        triggerShake();
+        if (result.reason === "NO_PROFILE") return showToast("No profile found. Please create one first.", "error");
+        return showToast("Incorrect credentials.", "error");
+      }
+
+      // ✅ Remember me session token (demo)
+      if (rememberMe) {
+        localStorage.setItem("dietify_session_active", "1");
+        sessionStorage.removeItem("dietify_session_active");
+      } else {
+        sessionStorage.setItem("dietify_session_active", "1");
+        localStorage.removeItem("dietify_session_active");
+      }
+
+      showToast("Welcome back ✅", "success");
+      setLogin((prev) => ({ ...prev, password: "" })); // clear password after login
+      setShowLoginPassword(false);
+
+      setTimeout(() => navigate("/user-input"), 700);
+    } catch (err) {
+      console.error(err);
       triggerShake();
-      return showToast("No profile found. Please create one first.", "error");
+      showToast("Login failed. Please try again.", "error");
     }
-
-    const okId = login.identifier.trim() === saved.email || login.identifier.trim() === saved.phone;
-    const okPw = login.password === saved.password;
-
-    if (!okId || !okPw) {
-      triggerShake();
-      return showToast("Incorrect credentials.", "error");
-    }
-
-    showToast("Welcome back ✅", "success");
-    setTimeout(() => navigate("/steps"), 900);
   };
-
-  const handlePasswordChange = (value) => {
-    setReg({ ...reg, password: value });
-    setPasswordError(validatePassword(value));
-  };
-
-  useEffect(() => {
-    setPasswordError("");
-  }, [mode]);
 
   return (
-    <div className="reg-hero">
+    <div className="reg-hero" data-cy="registration-page">
       <div className="reg-blobs" aria-hidden="true">
         <span className="blob b1" />
         <span className="blob b2" />
@@ -193,26 +225,15 @@ export default function Registration() {
 
       <div className="reg-shell">
         <main className={`reg-card ${shake ? "shake" : ""}`}>
+          {/* ✅ Clean, professional header (minimal) */}
           <div className="reg-top">
-            <div className="reg-step-badge">
-              {mode === "register" ? "Let’s get to know you" : "Welcome back"}
-            </div>
+            <div className="reg-step-badge">Let’s get to know you</div>
 
-            <h1 className="reg-title">{mode === "register" ? "Create your profile" : "Login to continue"}</h1>
+            <h1 className="reg-title">Create your Dietify profile</h1>
 
             <p className="reg-subtitle">
-              {mode === "register"
-                ? "Answer a few basics so Dietify can personalize your meal recommendations and help you build a healthier lifestyle. Your profile also helps you track progress over time."
-                : "Login to continue your plan and tracking."}
+              Creating a profile helps Dietify personalize your recommendations and track your progress over time.
             </p>
-
-            {mode === "register" && (
-              <div className="reg-benefits">
-                <div className="reg-benefit">🎯 Personalized recommendations</div>
-                <div className="reg-benefit">🗓️ Weekly planning made easy</div>
-                <div className="reg-benefit">📈 Track your progress</div>
-              </div>
-            )}
 
             <div className="reg-tabs" role="tablist" aria-label="Auth tabs">
               <button
@@ -232,8 +253,9 @@ export default function Registration() {
             </div>
           </div>
 
+          {/* ===== SIGN UP ===== */}
           {mode === "register" && (
-            <form className="reg-form" onSubmit={handleRegister}>
+            <form className="reg-form" onSubmit={handleRegister} data-cy="signup-form">
               <div className="reg-grid">
                 <label className="reg-label">
                   First name
@@ -243,6 +265,7 @@ export default function Registration() {
                     placeholder="Your first name"
                     onChange={(e) => setReg({ ...reg, firstName: e.target.value })}
                     autoComplete="given-name"
+                    data-cy="first-name"
                   />
                 </label>
 
@@ -254,6 +277,7 @@ export default function Registration() {
                     placeholder="Your last name"
                     onChange={(e) => setReg({ ...reg, lastName: e.target.value })}
                     autoComplete="family-name"
+                    data-cy="last-name"
                   />
                 </label>
               </div>
@@ -267,6 +291,7 @@ export default function Registration() {
                   onChange={(e) => setReg({ ...reg, email: e.target.value })}
                   autoComplete="email"
                   type="email"
+                  data-cy="email"
                 />
               </label>
 
@@ -284,6 +309,7 @@ export default function Registration() {
                         countryCode: selected.code,
                       }));
                     }}
+                    data-cy="country-select"
                   >
                     {COUNTRY_CODES.map((c) => (
                       <option key={c.iso} value={c.iso}>
@@ -302,6 +328,7 @@ export default function Registration() {
                     }}
                     inputMode="numeric"
                     autoComplete="tel-national"
+                    data-cy="phone"
                   />
                 </div>
 
@@ -318,12 +345,14 @@ export default function Registration() {
                     type={showRegPassword ? "text" : "password"}
                     autoComplete="new-password"
                     placeholder="Create a strong password"
+                    data-cy="signup-password"
                   />
                   <button
                     type="button"
                     className="reg-eye"
                     onClick={() => setShowRegPassword((s) => !s)}
                     aria-label={showRegPassword ? "Hide password" : "Show password"}
+                    data-cy="toggle-signup-password"
                   >
                     {showRegPassword ? "Hide" : "Show"}
                   </button>
@@ -341,16 +370,15 @@ export default function Registration() {
                 {passwordError && <small className="reg-error">{passwordError}</small>}
               </label>
 
-              <button className="reg-primary" type="submit">
+              <button className="reg-primary" type="submit" data-cy="signup-submit">
                 Create profile
               </button>
-
-              <p className="reg-footnote">Demo build: credentials are saved locally for testing.</p>
             </form>
           )}
 
+          {/* ===== LOGIN ===== */}
           {mode === "login" && (
-            <form className="reg-form" onSubmit={handleLogin}>
+            <form className="reg-form" onSubmit={handleLogin} data-cy="login-form">
               <label className="reg-label">
                 Email or phone
                 <input
@@ -359,6 +387,7 @@ export default function Registration() {
                   placeholder="Email or +49123456789"
                   onChange={(e) => setLogin({ ...login, identifier: e.target.value })}
                   autoComplete="username"
+                  data-cy="login-identifier"
                 />
               </label>
 
@@ -372,25 +401,37 @@ export default function Registration() {
                     type={showLoginPassword ? "text" : "password"}
                     autoComplete="current-password"
                     placeholder="Your password"
+                    data-cy="login-password"
                   />
                   <button
                     type="button"
                     className="reg-eye"
                     onClick={() => setShowLoginPassword((s) => !s)}
                     aria-label={showLoginPassword ? "Hide password" : "Show password"}
+                    data-cy="toggle-login-password"
                   >
                     {showLoginPassword ? "Hide" : "Show"}
                   </button>
                 </div>
               </label>
 
-              <button className="reg-primary" type="submit">
+              {/* ✅ Remember me */}
+              <label className="reg-remember" data-cy="remember-me">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                Remember me
+              </label>
+
+              <button className="reg-primary" type="submit" data-cy="login-submit">
                 Login
               </button>
 
               <div className="reg-switch">
                 Don’t have an account?{" "}
-                <button type="button" className="reg-link" onClick={() => setMode("register")}>
+                <button type="button" className="reg-link" onClick={() => setMode("register")} data-cy="switch-to-signup">
                   Create one
                 </button>
               </div>

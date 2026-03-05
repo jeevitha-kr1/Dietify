@@ -2,16 +2,18 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Logo.css";
 
+const SPLASH_DELAY_MS = 2200;
+
 export default function Logo() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const t = setTimeout(() => navigate("/home"), 2200);
+    const t = setTimeout(() => navigate("/home"), SPLASH_DELAY_MS);
     return () => clearTimeout(t);
   }, [navigate]);
 
   return (
-    <div className="lg-hero">
+    <div className="lg-hero" data-cy="logo-screen">
       <div className="lg-blobs" aria-hidden="true">
         <span className="blob b1" />
         <span className="blob b2" />
@@ -19,8 +21,9 @@ export default function Logo() {
       </div>
 
       <div className="lg-center">
-        <div className="lg-card">
-          <div className="lg-mark">🥗</div>
+        <div className="lg-card" role="status" aria-live="polite">
+          <div className="lg-mark" aria-hidden="true">🥗</div>
+
           <div className="lg-word">
             <div className="lg-title">Dietify</div>
             <div className="lg-sub">Diet recommendation & planning</div>

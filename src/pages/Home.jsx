@@ -3,9 +3,10 @@ import "../styles/Home.css";
 
 export default function Home() {
   const navigate = useNavigate();
+  const year = new Date().getFullYear();
 
   return (
-    <div className="hm-hero">
+    <div className="hm-hero" data-cy="home-page">
       <div className="hm-blobs" aria-hidden="true">
         <span className="blob b1" />
         <span className="blob b2" />
@@ -13,26 +14,42 @@ export default function Home() {
       </div>
 
       <header className="hm-topbar">
-        <div className="hm-brand" role="button" tabIndex={0} onClick={() => navigate("/home")}>
-          <div className="hm-logo">🥗</div>
+        <button
+          className="hm-brand"
+          type="button"
+          onClick={() => navigate("/home")}
+          aria-label="Go to home"
+          data-cy="home-brand"
+        >
+          <div className="hm-logo" aria-hidden="true">🥗</div>
           <div>
             <div className="hm-name">Dietify</div>
             <div className="hm-tag">Diet recommendation & planning</div>
           </div>
-        </div>
+        </button>
 
-        <nav className="hm-nav">
-          <button className="hm-nav-btn" type="button" onClick={() => navigate("/about")}>
+        <nav className="hm-nav" aria-label="Primary navigation">
+          <button
+            className="hm-nav-btn"
+            type="button"
+            onClick={() => navigate("/about")}
+            data-cy="nav-about"
+          >
             About
           </button>
-          <button className="hm-nav-btn" type="button" onClick={() => navigate("/registration")}>
+          <button
+            className="hm-nav-btn"
+            type="button"
+            onClick={() => navigate("/registration")}
+            data-cy="nav-login"
+          >
             Login
           </button>
         </nav>
       </header>
 
       <main className="hm-center">
-        <div className="hm-card">
+        <div className="hm-card" data-cy="home-hero-card">
           <div className="hm-kicker">Minimal • Personalized • Practical</div>
 
           <h1 className="hm-title">Build a better food routine.</h1>
@@ -47,17 +64,27 @@ export default function Home() {
             <div className="hm-point">📈 Track progress over time</div>
           </div>
 
-          <button className="hm-primary" type="button" onClick={() => navigate("/registration")}>
+          <button
+            className="hm-primary"
+            type="button"
+            onClick={() => navigate("/registration")}
+            data-cy="cta-create-profile"
+          >
             Create profile
           </button>
 
-          <button className="hm-link" type="button" onClick={() => navigate("/about")}>
+          <button
+            className="hm-link"
+            type="button"
+            onClick={() => navigate("/about")}
+            data-cy="cta-why-dietify"
+          >
             Why Dietify →
           </button>
         </div>
       </main>
 
-      <footer className="hm-footer">© {new Date().getFullYear()} Dietify</footer>
+      <footer className="hm-footer">© {year} Dietify</footer>
     </div>
   );
 }

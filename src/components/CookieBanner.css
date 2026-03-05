@@ -1,0 +1,65 @@
+.cb-wrap{
+  position: fixed;
+  inset: auto 0 18px 0;
+  display: grid;
+  place-items: center;
+  padding: 0 14px;
+  z-index: 9999;
+}
+
+.cb-card{
+  width: min(980px, 96vw);
+  border-radius: 18px;
+  padding: 16px 16px;
+  background: rgba(15, 15, 15, 0.88);
+  border: 1px solid rgba(255,255,255,0.16);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 18px 55px rgba(0,0,0,0.45);
+  color: rgba(255,255,255,0.92);
+}
+
+.cb-title{
+  font-weight: 900;
+  font-size: 1.05rem;
+  margin-bottom: 6px;
+}
+
+.cb-text{
+  opacity: 0.85;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.cb-actions{
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.cb-btn{
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 800;
+  border: 1px solid rgba(255,255,255,0.16);
+}
+
+.cb-secondary{
+  background: rgba(0,0,0,0.25);
+  color: rgba(255,255,255,0.92);
+}
+
+.cb-primary{
+  border: none;
+  color: #062014;
+  background: linear-gradient(90deg, rgba(66,245,173,0.95), rgba(255,209,102,0.90));
+  box-shadow: 0 12px 26px rgba(0,0,0,0.28);
+}
+
+.cb-btn:focus-visible{
+  outline: 3px solid rgba(66,245,173,0.9);
+  outline-offset: 4px;
+}

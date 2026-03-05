@@ -3,9 +3,10 @@ import "../styles/AboutUs.css";
 
 export default function AboutUs() {
   const navigate = useNavigate();
+  const year = new Date().getFullYear();
 
   return (
-    <div className="au-hero">
+    <div className="au-hero" data-cy="about-page">
       <div className="au-blobs" aria-hidden="true">
         <span className="blob b1" />
         <span className="blob b2" />
@@ -13,50 +14,65 @@ export default function AboutUs() {
       </div>
 
       <header className="au-topbar">
-        <div className="au-brand" role="button" tabIndex={0} onClick={() => navigate("/home")}>
-          <div className="au-logo">🥗</div>
+        <button
+          className="au-brand"
+          type="button"
+          onClick={() => navigate("/home")}
+          aria-label="Go to home"
+        >
+          <div className="au-logo" aria-hidden="true">🥗</div>
           <div>
             <div className="au-name">Dietify</div>
             <div className="au-tag">About</div>
           </div>
-        </div>
+        </button>
 
-        <nav className="au-nav">
+        <nav className="au-nav" aria-label="Primary navigation">
           <button className="au-nav-btn" type="button" onClick={() => navigate("/home")}>
             Home
           </button>
           <button className="au-nav-primary" type="button" onClick={() => navigate("/registration")}>
-            Start
+            Get started
           </button>
         </nav>
       </header>
 
       <main className="au-center">
         <div className="au-card">
-          <div className="au-kicker">Our idea</div>
+          <div className="au-kicker">What Dietify does</div>
 
-          <h1 className="au-title">Healthy choices should feel easy.</h1>
+          <h1 className="au-title">Personalized eating, made practical.</h1>
 
           <p className="au-subtitle">
-            Dietify is built to reduce decision fatigue around food. Instead of forcing perfection,
-            it focuses on realistic routines — recommendations, planning, and tracking that fit your lifestyle.
+            Dietify helps you plan and follow a routine that matches your goals — without making nutrition feel confusing.
+            It focuses on smart suggestions, clear planning, and simple tracking.
           </p>
 
           <div className="au-section">
-            <h3>What Dietify stands for</h3>
+            <h3>Personalized recommendations</h3>
             <ul>
-              <li><strong>Clarity:</strong> simple planning, no clutter</li>
-              <li><strong>Consistency:</strong> small steps that last</li>
-              <li><strong>Personalization:</strong> suggestions based on your goal</li>
+              <li>Goal-based meal suggestions (lose, maintain, gain)</li>
+              <li>Recipes selected to match your preferences and time</li>
+              <li>Macro-focused recommendations for balanced eating</li>
             </ul>
           </div>
 
           <div className="au-section">
-            <h3>Privacy (demo)</h3>
-            <p>
-              In this project build, your login data is stored locally for testing. In a real product,
-              it would be secured on a backend with proper authentication.
-            </p>
+            <h3>Meal planning that fits your lifestyle</h3>
+            <ul>
+              <li>Weekly or monthly meal plans (you choose)</li>
+              <li>Flexible plans — adjust meals anytime</li>
+              <li>Smart grocery list generation based on your plan</li>
+            </ul>
+          </div>
+
+          <div className="au-section">
+            <h3>Simple tracking</h3>
+            <ul>
+              <li>Track activity level and workouts</li>
+              <li>Track water intake and daily habits</li>
+              <li>Progress tracking over time to stay consistent</li>
+            </ul>
           </div>
 
           <div className="au-actions">
@@ -70,7 +86,7 @@ export default function AboutUs() {
         </div>
       </main>
 
-      <footer className="au-footer">© {new Date().getFullYear()} Dietify</footer>
+      <footer className="au-footer">© {year} Dietify</footer>
     </div>
   );
 }
