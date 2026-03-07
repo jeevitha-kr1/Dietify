@@ -1,265 +1,127 @@
-/* ===========================
-   ABOUT PAGE — Dietify
-   =========================== */
-
-.au-hero{
-  min-height:100vh;
-  position:relative;
-  overflow:hidden;
-  padding:22px 18px;
-
-  background:
-    linear-gradient(135deg, rgba(10,20,12,0.78), rgba(10,20,12,0.55)),
-    url("https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=2400&q=80");
-  background-size:cover;
-  background-position:center;
-  color:rgba(255,255,255,0.92);
+.about-page {
+  min-height: 100vh;
+  padding: 32px 20px 0;
 }
 
-/* ===========================
-   Background blobs
-   =========================== */
-.au-blobs .blob{
-  position:absolute;
-  filter:blur(40px);
-  opacity:.45;
-  border-radius:999px;
-  animation: floaty 10s ease-in-out infinite;
-}
-.au-blobs .b1{
-  width:340px; height:340px;
-  left:-120px; top:-130px;
-  background:rgba(66,245,173,.75);
-}
-.au-blobs .b2{
-  width:440px; height:440px;
-  right:-170px; top:130px;
-  background:rgba(0,210,255,.55);
-  animation-delay:1.7s;
-}
-.au-blobs .b3{
-  width:380px; height:380px;
-  left:20%; bottom:-190px;
-  background:rgba(255,209,102,.55);
-  animation-delay:3.4s;
-}
-@keyframes floaty{
-  0%,100%{ transform:translateY(0) translateX(0) scale(1); }
-  50%{ transform:translateY(-18px) translateX(12px) scale(1.05); }
+.about-hero {
+  width: min(1100px, 100%);
+  margin: 0 auto 28px;
+  text-align: center;
 }
 
-/* ===========================
-   Topbar
-   =========================== */
-.au-topbar{
-  max-width:1150px;
-  margin:0 auto;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:14px;
-  z-index:2;
-  position:relative;
+.about-kicker {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.8;
 }
 
-/* Brand (now a BUTTON in JSX) */
-.au-brand{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  cursor:pointer;
-  user-select:none;
-
-  /* button reset */
-  background:transparent;
-  border:none;
-  color:inherit;
-  padding:0;
-  text-align:left;
-}
-.au-brand:focus-visible{
-  outline:3px solid rgba(66,245,173,0.90);
-  outline-offset:6px;
-  border-radius:16px;
+.about-title {
+  margin: 0 0 18px;
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  line-height: 1.1;
+  font-weight: 800;
 }
 
-.au-logo{
-  width:48px;
-  height:48px;
-  display:grid;
-  place-items:center;
-  border-radius:14px;
-  background:rgba(255,255,255,0.14);
-  border:1px solid rgba(255,255,255,0.22);
+.about-description {
+  max-width: 860px;
+  margin: 0 auto;
+  line-height: 1.8;
+  font-size: 1.05rem;
+  opacity: 0.9;
 }
 
-.au-name{ font-weight:900; font-size:1.2rem; }
-.au-tag{ opacity:0.82; font-size:0.92rem; }
-
-.au-nav{ display:flex; align-items:center; gap:10px; }
-
-.au-nav-btn{
-  height:42px;
-  padding:0 14px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,0.18);
-  background:rgba(0,0,0,0.20);
-  color:white;
-  cursor:pointer;
-  font-weight:700;
-  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
-}
-.au-nav-btn:hover{
-  transform: translateY(-1px);
-  background:rgba(0,0,0,0.28);
-  border-color: rgba(255,255,255,0.28);
-}
-.au-nav-btn:active{ transform: translateY(0); }
-
-.au-nav-primary{
-  height:42px;
-  padding:0 16px;
-  border-radius:999px;
-  border:none;
-  cursor:pointer;
-  font-weight:900;
-  color:#062014;
-  background:linear-gradient(90deg, rgba(66,245,173,0.95), rgba(255,209,102,0.90));
-  box-shadow: 0 14px 28px rgba(0,0,0,0.28);
-  transition: transform 140ms ease, filter 140ms ease;
-}
-.au-nav-primary:hover{
-  transform: translateY(-1px);
-  filter: brightness(1.02);
-}
-.au-nav-primary:active{ transform: translateY(0); }
-
-/* ===========================
-   Center card
-   =========================== */
-.au-center{
-  max-width:1150px;
-  margin:0 auto;
-  min-height:calc(100vh - 140px);
-  display:grid;
-  place-items:center;
-  z-index:2;
-  position:relative;
+.about-grid {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
 }
 
-.au-card{
-  width:min(760px,92vw);
-  padding:22px;
-  border-radius:22px;
-  background:rgba(255,255,255,0.10);
-  border:1px solid rgba(255,255,255,0.20);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 18px 50px rgba(0,0,0,0.28);
+.about-card {
+  padding: 24px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-.au-kicker{
-  display:inline-flex;
-  padding:8px 12px;
-  border-radius:999px;
-  background:rgba(0,0,0,0.22);
-  border:1px solid rgba(255,255,255,0.14);
-  font-weight:800;
-  opacity:.95;
+.about-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.12);
 }
 
-.au-title{
-  margin:14px 0 0;
-  font-size:2rem;
-  line-height:1.2;
+.about-card__icon {
+  font-size: 2rem;
+  margin-bottom: 12px;
 }
 
-.au-subtitle{
-  margin:10px 0 0;
-  opacity:.86;
-  line-height:1.6;
+.about-card h2 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
 }
 
-.au-section{ margin-top:16px; }
-.au-section h3{ margin:0 0 8px; font-size:1.05rem; }
-.au-section p{ margin:0; opacity:.86; line-height:1.6; }
-.au-section ul{ margin:0; padding-left:18px; opacity:.9; line-height:1.7; }
-.au-section li{ margin:4px 0; }
-
-.au-actions{
-  margin-top:18px;
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
+.about-card p {
+  margin: 0;
+  line-height: 1.7;
+  opacity: 0.86;
 }
 
-.au-primary{
-  height:46px;
-  padding:0 18px;
-  border:none;
-  border-radius:14px;
-  cursor:pointer;
-  font-weight:900;
-  color:#062014;
-  background:linear-gradient(90deg, rgba(66,245,173,0.95), rgba(255,209,102,0.90));
-  box-shadow: 0 14px 28px rgba(0,0,0,0.28);
-  transition: transform 140ms ease, filter 140ms ease;
-}
-.au-primary:hover{
-  transform: translateY(-1px);
-  filter: brightness(1.02);
-}
-.au-primary:active{ transform: translateY(0); }
-
-.au-secondary{
-  height:46px;
-  padding:0 18px;
-  border-radius:14px;
-  cursor:pointer;
-  font-weight:900;
-  background:rgba(0,0,0,0.22);
-  border:1px solid rgba(255,255,255,0.18);
-  color:white;
-  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
-}
-.au-secondary:hover{
-  transform: translateY(-1px);
-  background:rgba(0,0,0,0.28);
-  border-color: rgba(255,255,255,0.28);
-}
-.au-secondary:active{ transform: translateY(0); }
-
-/* ===========================
-   Footer
-   =========================== */
-.au-footer{
-  max-width:1150px;
-  margin:0 auto;
-  z-index:2;
-  position:relative;
-  opacity:0.75;
-  padding:10px 0 0;
+.about-cta {
+  width: min(1200px, 100%);
+  margin: 32px auto 42px;
 }
 
-/* ===========================
-   Responsive
-   =========================== */
-@media (max-width:520px){
-  .au-nav{ display:none; }
-  .au-title{ font-size:1.8rem; }
+.about-cta__card {
+  padding: 32px;
+  border-radius: 28px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.08);
 }
 
-/* ===========================
-   Accessibility: Reduced motion
-   =========================== */
-@media (prefers-reduced-motion: reduce) {
-  .au-blobs .blob{
-    animation: none !important;
-  }
+.about-cta__card h2 {
+  margin: 0 0 12px;
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+}
 
-  .au-nav-btn,
-  .au-nav-primary,
-  .au-primary,
-  .au-secondary{
-    transition: none !important;
+.about-cta__card p {
+  max-width: 760px;
+  margin: 0 auto 22px;
+  line-height: 1.7;
+  opacity: 0.86;
+}
+
+.about-cta__actions {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.primary-btn,
+.secondary-btn {
+  padding: 12px 18px;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.primary-btn {
+  background: #111827;
+  color: white;
+}
+
+.secondary-btn {
+  background: rgba(255, 255, 255, 0.14);
+  color: inherit;
+}
+
+@media (max-width: 900px) {
+  .about-grid {
+    grid-template-columns: 1fr;
   }
 }
