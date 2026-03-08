@@ -1,7 +1,5 @@
-import { useNavigate } from "react-router-dom";
-
-import Footer from "../components/common/Footer";
-
+import { Link, useNavigate } from "react-router-dom";
+import CookieBar from "../components/common/CookieBar";
 import "../styles/AboutUs.css";
 
 export default function AboutUs() {
@@ -9,131 +7,93 @@ export default function AboutUs() {
 
   return (
     <main className="about-page">
-      {/* Hero section */}
-      <section className="about-hero">
-        <p className="about-kicker">Why Dietify?</p>
+      <section className="page-shell about-shell">
+        <section className="about-hero glass-card">
+          <span className="about-badge">Why Dietify</span>
 
-        <h1 className="about-title">
-          Healthy eating should feel personal, simple, and achievable.
-        </h1>
+          <h1 className="about-title">
+            Personalized nutrition with a cleaner, smarter experience.
+          </h1>
 
-        <p className="about-description">
-          Dietify is a diet planning and recommendation application designed to help
-          users understand their body needs and turn those needs into practical daily
-          decisions. Instead of giving generic suggestions, Dietify creates a more
-          personalized experience using your health profile, lifestyle, and food
-          preferences.
-        </p>
-      </section>
-
-      {/* Story-style feature sections */}
-      <section className="about-grid">
-        <article className="about-card">
-          <div className="about-card__icon">⚖️</div>
-          <h2>Understand your body better</h2>
-          <p>
-            Dietify calculates your BMI and presents it in a simple, readable way so
-            you can better understand your starting point before building a healthier routine.
-          </p>
-        </article>
-
-        <article className="about-card">
-          <div className="about-card__icon">🔥</div>
-          <h2>Know your calorie needs</h2>
-          <p>
-            Based on age, height, weight, activity level, and goal, Dietify estimates
-            your daily calorie requirement to support fat loss, muscle gain, or maintenance.
-          </p>
-        </article>
-
-        <article className="about-card">
-          <div className="about-card__icon">🥚</div>
-          <h2>Get macro guidance</h2>
-          <p>
-            The app also provides a macro split for protein, carbohydrates, and fats
-            so users can move beyond guesswork and plan meals more clearly.
-          </p>
-        </article>
-
-        <article className="about-card">
-          <div className="about-card__icon">🍽️</div>
-          <h2>Receive personalized meals</h2>
-          <p>
-            Dietify considers diet preference, cuisine preference, allergies, and
-            health conditions to suggest meal ideas and recipes that feel more realistic
-            for everyday life.
-          </p>
-        </article>
-
-        <article className="about-card">
-          <div className="about-card__icon">🤖</div>
-          <h2>AI-assisted meal planning</h2>
-          <p>
-            With OpenAI integration, Dietify can generate a structured meal plan,
-            practical nutrition tips, and recipe suggestions tailored to the user profile.
-          </p>
-        </article>
-
-        <article className="about-card">
-          <div className="about-card__icon">🛒</div>
-          <h2>Smart ingredient cart</h2>
-          <p>
-            Instead of saving only recipe names, Dietify adds recipe ingredients to
-            the cart. This makes the app more useful because it directly supports the
-            user’s next step: shopping.
-          </p>
-        </article>
-
-        <article className="about-card">
-          <div className="about-card__icon">📄</div>
-          <h2>Export your shopping list</h2>
-          <p>
-            The ingredient cart can be exported into Excel or PDF, making it easy to
-            carry the final shopping list outside the app.
-          </p>
-        </article>
-
-        <article className="about-card">
-          <div className="about-card__icon">✨</div>
-          <h2>A complete frontend project</h2>
-          <p>
-            Dietify brings together React, Redux, Context API, browser storage,
-            OpenAI integration, unit testing, and Cypress testing in one complete
-            master-level frontend application.
-          </p>
-        </article>
-      </section>
-
-      {/* Final CTA */}
-      <section className="about-cta">
-        <div className="about-cta__card">
-          <h2>Ready to build your personalized diet plan?</h2>
-          <p>
-            Create your profile, answer a few guided questions, and let Dietify turn
-            your information into a practical nutrition plan.
+          <p className="about-description">
+            Dietify is designed to turn personal health inputs into a practical
+            weekly plan, helpful nutrition insight, and a shopping-ready flow
+            that feels smooth from start to finish.
           </p>
 
-          <div className="about-cta__actions">
+          <div className="about-actions">
             <button
               type="button"
-              className="secondary-btn"
+              className="btn btn-primary"
+              onClick={() => navigate("/registration")}
+            >
+              Start Now
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-secondary"
               onClick={() => navigate("/home")}
             >
               Back Home
             </button>
-
-            <button
-              type="button"
-              className="primary-btn"
-              onClick={() => navigate("/registration")}
-            >
-              Get Started
-            </button>
           </div>
-        </div>
+        </section>
+
+        <section className="about-grid">
+          <article className="about-card glass-panel">
+            <span className="about-card__icon">🧠</span>
+            <h2>Smarter personalization</h2>
+            <p>
+              Inputs are transformed into a more tailored meal-planning
+              experience instead of generic recommendations.
+            </p>
+          </article>
+
+          <article className="about-card glass-panel">
+            <span className="about-card__icon">📅</span>
+            <h2>Weekly planning flow</h2>
+            <p>
+              Meals are structured day by day so the experience feels clearer,
+              simpler, and easier to follow.
+            </p>
+          </article>
+
+          <article className="about-card glass-panel">
+            <span className="about-card__icon">🛒</span>
+            <h2>Shopping-ready output</h2>
+            <p>
+              Ingredients can be collected into a cart and exported for a more
+              practical lifestyle flow.
+            </p>
+          </article>
+        </section>
+
+        <section className="about-highlight glass-card">
+          <div className="about-highlight__content">
+            <p className="about-highlight__kicker">Designed for simplicity</p>
+            <h2>
+              A premium wellness flow from profile creation to planning and
+              grocery preparation.
+            </h2>
+            <p>
+              Dietify is built to make healthy planning feel more intentional,
+              less overwhelming, and more visually refined across the full user
+              journey.
+            </p>
+          </div>
+        </section>
+
+        <footer className="about-footer glass-card">
+          <p>Dietify © 2026</p>
+
+          <div className="about-footer-links">
+            <Link to="/legal">Privacy & Terms</Link>
+          </div>
+        </footer>
       </section>
 
-      <Footer />
+      <CookieBar />
     </main>
   );
 }
