@@ -1,52 +1,105 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 import { onboardingQuestions } from "../data/onboardingQuestions";
-import { setUserProfile } from "../store/slices/userSlice";
-import { setResults } from "../store/slices/resultSlice";
+import { setUserProfile, clearUserProfile } from "../store/slices/userSlice";
+import { setResults, clearResults } from "../store/slices/resultSlice";
 
 import { calculateBMI, getBMICategory } from "../utils/bmi";
 import { calculateDailyCalories } from "../utils/calories";
 import { calculateMacros } from "../utils/macros";
+import { clearCart } from "../store/slices/cartSlice";
+import { clearAiData } from "../store/slices/aiSlice";
+import { useAuth } from "../hooks/useAuth";
 
 import "../styles/UserInput.css";
+
+const DEFAULT_ANSWERS = {
+  age: "",
+  gender: "",
+  height: "",
+  weight: "",
+  targetWeight: "",
+  activityLevel: "",
+  goal: "",
+  dietPreference: "",
+  allergies: [],
+  mealsPerDay: "",
+  preferredCuisine: "",
+  healthConditions: [],
+};
 
 export default function UserInput() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
 
-  // Tracks which question is currently shown
   const [currentStep, setCurrentStep] = useState(0);
-
-  // Stores all user answers
-  const [answers, setAnswers] = useState({
-    age: "",
-    gender: "",
-    height: "",
-    weight: "",
-    targetWeight: "",
-    activityLevel: "",
-    goal: "",
-    dietPreference: "",
-    allergies: [],
-    mealsPerDay: "",
-    preferredCuisine: "",
-    healthConditions: [],
-  });
-
-  // Error message for required fields
+  const [answers, setAnswers] = useState(DEFAULT_ANSWERS);
   const [error, setError] = useState("");
+  const [showSavedProfileCard, setShowSavedProfileCard] = useState(false);
+  const [isEditingSavedAnswers, setIsEditingSavedAnswers] = useState(false);
 
-  // Current question object from the data file
   const currentQuestion = onboardingQuestions[currentStep];
 
-  // Progress percentage for progress bar
+  const storageKey = useMemo(() => {
+    if (!currentUser?.email) return null;
+    return `dietify_user_profile_${currentUser.email}`;
+  }, [currentUser]);
+
   const progressValue = useMemo(() => {
     return ((currentStep + 1) / onboardingQuestions.length) * 100;
   }, [currentStep]);
 
-  // Update answer for normal input/select fields
+  const isProfileComplete = (data) => {
+    return onboardingQuestions
+      .filter((question) => question.required)
+      .every((question) => {
+        const value = data[question.id];
+
+        if (Array.isArray(value)) {
+          return value.length > 0;
+        }
+
+        return value !== "" && value !== null && value !== undefined;
+      });
+  };
+
+  useEffect(() => {
+    if (!storageKey) return;
+
+    try {
+      const savedAnswersRaw = localStorage.getItem(storageKey);
+
+      if (!savedAnswersRaw) return;
+
+      const savedAnswers = JSON.parse(savedAnswersRaw);
+      const mergedAnswers = {
+        ...DEFAULT_ANSWERS,
+        ...savedAnswers,
+      };
+
+      setAnswers(mergedAnswers);
+
+      if (isProfileComplete(mergedAnswers)) {
+        setShowSavedProfileCard(true);
+      }
+    } catch (loadError) {
+      console.error("Failed to load saved answers:", loadError);
+    }
+  }, [storageKey]);
+
+  const saveAnswersLocally = (data) => {
+    if (!storageKey) return;
+
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(data));
+    } catch (saveError) {
+      console.error("Failed to save answers:", saveError);
+    }
+  };
+
   const handleSingleValueChange = (event) => {
     const { value } = event.target;
 
@@ -58,7 +111,6 @@ export default function UserInput() {
     setError("");
   };
 
-  // Update answer for multiselect checkbox fields
   const handleMultiSelectChange = (option) => {
     setAnswers((previous) => {
       const existingValues = previous[currentQuestion.id] || [];
@@ -76,47 +128,68 @@ export default function UserInput() {
     setError("");
   };
 
-  // Checks whether current required question is answered
   const validateCurrentStep = () => {
-    if (!currentQuestion.required) {
-      return true;
-    }
-
     const value = answers[currentQuestion.id];
 
-    // Validation for multiselect
-    if (Array.isArray(value)) {
-      if (value.length === 0) {
-        setError("Please select at least one option or skip if optional.");
+    if (currentQuestion.required) {
+      if (Array.isArray(value) && value.length === 0) {
+        setError("Please select at least one option before continuing.");
         return false;
       }
-      return true;
+
+      if (
+        !Array.isArray(value) &&
+        (value === "" || value === null || value === undefined)
+      ) {
+        setError("Please answer this question before continuing.");
+        return false;
+      }
     }
 
-    // Validation for normal inputs
-    if (value === "" || value === null || value === undefined) {
-      setError("Please answer this question before continuing.");
-      return false;
+    if (currentQuestion.id === "age" && value !== "") {
+      const age = Number(value);
+      if (Number.isNaN(age) || age < 16 || age > 100) {
+        setError("Age must be between 16 and 100.");
+        return false;
+      }
     }
 
+    if (currentQuestion.id === "height" && value !== "") {
+      const height = Number(value);
+      if (Number.isNaN(height) || height < 100 || height > 250) {
+        setError("Height must be between 100 cm and 250 cm.");
+        return false;
+      }
+    }
+
+    if (currentQuestion.id === "weight" && value !== "") {
+      const weight = Number(value);
+      if (Number.isNaN(weight) || weight < 30 || weight > 300) {
+        setError("Weight must be between 30 kg and 300 kg.");
+        return false;
+      }
+    }
+
+    if (currentQuestion.id === "targetWeight" && value !== "") {
+      const targetWeight = Number(value);
+      if (Number.isNaN(targetWeight) || targetWeight < 30 || targetWeight > 300) {
+        setError("Target weight must be between 30 kg and 300 kg.");
+        return false;
+      }
+    }
+
+    if (currentQuestion.id === "mealsPerDay" && value !== "") {
+      const mealsPerDay = Number(value);
+      if (Number.isNaN(mealsPerDay) || mealsPerDay < 1 || mealsPerDay > 8) {
+        setError("Meals per day must be between 1 and 8.");
+        return false;
+      }
+    }
+
+    setError("");
     return true;
   };
 
-  // Move to next question
-  const handleNext = () => {
-    const isValid = validateCurrentStep();
-
-    if (!isValid) {
-      return;
-    }
-
-    if (currentStep < onboardingQuestions.length - 1) {
-      setCurrentStep((previous) => previous + 1);
-      setError("");
-    }
-  };
-
-  // Move to previous question
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep((previous) => previous - 1);
@@ -124,7 +197,15 @@ export default function UserInput() {
     }
   };
 
-  // Skip only optional questions
+  const handleNext = () => {
+    if (!validateCurrentStep()) return;
+
+    if (currentStep < onboardingQuestions.length - 1) {
+      setCurrentStep((previous) => previous + 1);
+      setError("");
+    }
+  };
+
   const handleSkip = () => {
     if (!currentQuestion.required && currentStep < onboardingQuestions.length - 1) {
       setCurrentStep((previous) => previous + 1);
@@ -132,24 +213,17 @@ export default function UserInput() {
     }
   };
 
-  // Final submit: save profile + calculate health metrics + navigate to results
   const handleFinish = () => {
-    const isValid = validateCurrentStep();
+    if (!validateCurrentStep()) return;
 
-    if (!isValid) {
-      return;
-    }
-
-    // Save full questionnaire answers to Redux
+    saveAnswersLocally(answers);
     dispatch(setUserProfile(answers));
 
-    // Calculate body metrics
     const bmi = calculateBMI(answers.height, answers.weight);
     const bmiCategory = getBMICategory(bmi);
     const calories = calculateDailyCalories(answers);
     const macros = calculateMacros(calories, answers.goal);
 
-    // Save calculated results to Redux
     dispatch(
       setResults({
         bmi,
@@ -159,33 +233,73 @@ export default function UserInput() {
       })
     );
 
-    // Move user to results page
     navigate("/result");
   };
 
-  // Render input UI based on question type
+  const handleContinueWithSavedAnswers = () => {
+    dispatch(setUserProfile(answers));
+
+    const bmi = calculateBMI(answers.height, answers.weight);
+    const bmiCategory = getBMICategory(bmi);
+    const calories = calculateDailyCalories(answers);
+    const macros = calculateMacros(calories, answers.goal);
+
+    dispatch(
+      setResults({
+        bmi,
+        bmiCategory,
+        calories,
+        macros,
+      })
+    );
+
+    navigate("/result");
+  };
+
+  const handleEditSavedAnswers = () => {
+    setShowSavedProfileCard(false);
+    setIsEditingSavedAnswers(true);
+    setCurrentStep(0);
+    setError("");
+  };
+
+  const handleResetSavedAnswers = () => {
+    if (storageKey) {
+      localStorage.removeItem(storageKey);
+    }
+
+    setAnswers(DEFAULT_ANSWERS);
+    setCurrentStep(0);
+    setError("");
+    setShowSavedProfileCard(false);
+    setIsEditingSavedAnswers(false);
+
+    dispatch(clearUserProfile());
+    dispatch(clearResults());
+    dispatch(clearCart());
+    dispatch(clearAiData());
+  };
+
   const renderQuestionField = () => {
     const fieldValue = answers[currentQuestion.id];
 
-    // Number input field
     if (currentQuestion.type === "number") {
       return (
         <input
-          className="userinput-field"
+          className={`userinput-field ${error ? "input-error" : ""}`}
           type="number"
           value={fieldValue}
           onChange={handleSingleValueChange}
-          placeholder="Enter your answer"
+          placeholder="Type your answer"
           min="0"
         />
       );
     }
 
-    // Dropdown select field
     if (currentQuestion.type === "select") {
       return (
         <select
-          className="userinput-field"
+          className={`userinput-field ${error ? "input-error" : ""}`}
           value={fieldValue}
           onChange={handleSingleValueChange}
         >
@@ -199,7 +313,6 @@ export default function UserInput() {
       );
     }
 
-    // Multiselect checkbox field
     if (currentQuestion.type === "multiselect") {
       return (
         <div className="userinput-multiselect">
@@ -207,7 +320,12 @@ export default function UserInput() {
             const checked = (fieldValue || []).includes(option);
 
             return (
-              <label key={option} className="userinput-checkbox-card">
+              <label
+                key={option}
+                className={`userinput-choice-card ${
+                  checked ? "userinput-choice-card--active" : ""
+                }`}
+              >
                 <input
                   type="checkbox"
                   checked={checked}
@@ -224,62 +342,107 @@ export default function UserInput() {
     return null;
   };
 
+  if (showSavedProfileCard && !isEditingSavedAnswers) {
+    return (
+      <main className="userinput-page">
+        <section className="userinput-center-shell">
+          <section className="userinput-focus-card glass-card userinput-saved-card">
+            <p className="userinput-kicker">Profile already saved</p>
+            <h1 className="userinput-title userinput-title--saved">
+              Welcome back, {currentUser?.fullName?.split(" ")[0] || "there"}.
+            </h1>
+            <p className="userinput-helper userinput-helper--saved">
+              Your nutrition profile is already saved on this browser. You can
+              continue with your saved answers, update them, or reset everything
+              and start again.
+            </p>
+
+            <div className="userinput-saved-actions">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleContinueWithSavedAnswers}
+              >
+                Continue
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleEditSavedAnswers}
+              >
+                Update Answers
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={handleResetSavedAnswers}
+              >
+                Reset Saved Answers
+              </button>
+            </div>
+          </section>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="userinput-page">
-      <section className="userinput-card">
-        <p className="userinput-step">
-          Question {currentStep + 1} of {onboardingQuestions.length}
-        </p>
+      <section className="userinput-center-shell">
+        <section className="userinput-focus-card glass-card">
+          <div className="userinput-progress-block">
+            <p className="userinput-step">
+              Question {currentStep + 1} of {onboardingQuestions.length}
+            </p>
 
-        {/* Progress bar */}
-        <div className="userinput-progress">
-          <div
-            className="userinput-progress-fill"
-            style={{ width: `${progressValue}%` }}
-          />
-        </div>
+            <div className="userinput-progress">
+              <div
+                className="userinput-progress-fill"
+                style={{ width: `${progressValue}%` }}
+              />
+            </div>
+          </div>
 
-        {/* Current question */}
-        <h1 className="userinput-title">{currentQuestion.label}</h1>
+          <div className="userinput-main">
+            <h1 className="userinput-title">{currentQuestion.label}</h1>
+            <p className="userinput-helper">
+              {currentQuestion.required ? "Required" : "Optional"}
+            </p>
 
-        {/* Required/optional status */}
-        <p className="userinput-helper">
-          {currentQuestion.required ? "Required" : "Optional"}
-        </p>
+            <div className="userinput-field-wrap">{renderQuestionField()}</div>
 
-        {/* Dynamic field */}
-        <div className="userinput-field-wrap">{renderQuestionField()}</div>
+            {error ? <p className="form-message form-message--error">{error}</p> : null}
 
-        {/* Validation message */}
-        {error ? <p className="userinput-error">{error}</p> : null}
+            <div className="userinput-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleBack}
+                disabled={currentStep === 0}
+              >
+                Back
+              </button>
 
-        {/* Navigation buttons */}
-        <div className="userinput-actions">
-          <button
-            type="button"
-            className="secondary-btn"
-            onClick={handleBack}
-            disabled={currentStep === 0}
-          >
-            Back
-          </button>
+              {!currentQuestion.required ? (
+                <button type="button" className="btn btn-ghost" onClick={handleSkip}>
+                  Skip
+                </button>
+              ) : null}
 
-          {!currentQuestion.required ? (
-            <button type="button" className="ghost-btn" onClick={handleSkip}>
-              Skip
-            </button>
-          ) : null}
-
-          {currentStep === onboardingQuestions.length - 1 ? (
-            <button type="button" className="primary-btn" onClick={handleFinish}>
-              Finish
-            </button>
-          ) : (
-            <button type="button" className="primary-btn" onClick={handleNext}>
-              Next
-            </button>
-          )}
-        </div>
+              {currentStep === onboardingQuestions.length - 1 ? (
+                <button type="button" className="btn btn-primary" onClick={handleFinish}>
+                  Finish
+                </button>
+              ) : (
+                <button type="button" className="btn btn-primary" onClick={handleNext}>
+                  Next
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
       </section>
     </main>
   );

@@ -1,128 +1,238 @@
 .userinput-page {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 24px;
+  padding: 24px 16px;
+  color: #f4f7f3;
+  background:
+    radial-gradient(circle at top left, rgba(118, 255, 168, 0.12), transparent 28%),
+    radial-gradient(circle at top right, rgba(255, 215, 120, 0.1), transparent 24%),
+    linear-gradient(135deg, #071119 0%, #08131a 32%, #04110d 66%, #0a120a 100%);
 }
 
-.userinput-card {
+.userinput-center-shell {
+  min-height: calc(100vh - 48px);
+  display: grid;
+  place-items: center;
+}
+
+.userinput-focus-card {
   width: min(760px, 100%);
-  padding: 32px;
+  padding: 28px;
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.055),
+    rgba(255, 255, 255, 0.02)
+  );
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(14px);
+}
+
+.userinput-saved-card {
+  width: min(720px, 100%);
+  text-align: left;
+}
+
+.userinput-kicker {
+  margin: 0 0 10px;
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a8dfb3;
+}
+
+.userinput-progress-block {
+  margin-bottom: 24px;
 }
 
 .userinput-step {
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   font-size: 0.95rem;
-  opacity: 0.8;
+  font-weight: 700;
+  color: rgba(236, 241, 236, 0.82);
 }
 
 .userinput-progress {
   width: 100%;
-  height: 10px;
+  height: 8px;
   border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.18);
-  margin-bottom: 24px;
 }
 
 .userinput-progress-fill {
   height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #7dd3fc, #34d399);
-  transition: width 0.25s ease;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #92f0b1 0%, #efd273 100%);
+  transition: width 0.28s ease;
+}
+
+.userinput-main {
+  display: grid;
+  gap: 0;
 }
 
 .userinput-title {
-  margin: 0 0 8px;
-  font-size: clamp(1.6rem, 3vw, 2.4rem);
-  line-height: 1.2;
+  margin: 0 0 10px;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  line-height: 1.04;
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  color: #f7f7f4;
+}
+
+.userinput-title--saved {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
 }
 
 .userinput-helper {
-  margin: 0 0 20px;
-  opacity: 0.75;
+  margin: 0 0 22px;
+  color: rgba(232, 238, 232, 0.78);
+  font-size: 0.98rem;
+  line-height: 1.65;
+}
+
+.userinput-helper--saved {
+  max-width: 580px;
 }
 
 .userinput-field-wrap {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .userinput-field {
   width: 100%;
+  min-height: 58px;
   padding: 14px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.12);
-  color: inherit;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(7, 19, 24, 0.72);
+  color: #f5f7f2;
   font-size: 1rem;
   outline: none;
+  transition: border-color 0.22s ease, box-shadow 0.22s ease;
+  appearance: none;
 }
 
 .userinput-field:focus {
-  border-color: rgba(255, 255, 255, 0.45);
+  border-color: rgba(136, 239, 174, 0.45);
+  box-shadow: 0 0 0 4px rgba(136, 239, 174, 0.08);
+}
+
+.userinput-field::placeholder {
+  color: rgba(232, 238, 232, 0.42);
+}
+
+.userinput-field option {
+  color: #111;
+}
+
+.input-error {
+  border-color: rgba(255, 107, 107, 0.55) !important;
+  box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.08);
 }
 
 .userinput-multiselect {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
-.userinput-checkbox-card {
+.userinput-choice-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  cursor: pointer;
-}
-
-.userinput-error {
-  margin: 0 0 16px;
-  color: #ffb4b4;
-  font-size: 0.95rem;
-}
-
-.userinput-actions {
-  display: flex;
   gap: 12px;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-}
-
-.primary-btn,
-.secondary-btn,
-.ghost-btn {
-  padding: 12px 18px;
-  border: none;
-  border-radius: 14px;
+  min-height: 58px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
-  font-weight: 600;
+  transition: 0.22s ease;
 }
 
-.primary-btn {
-  background: #111827;
-  color: white;
+.userinput-choice-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(136, 239, 174, 0.22);
 }
 
-.secondary-btn {
-  background: rgba(255, 255, 255, 0.14);
-  color: inherit;
+.userinput-choice-card input {
+  width: 16px;
+  height: 16px;
+  accent-color: #88efae;
+  flex-shrink: 0;
 }
 
-.ghost-btn {
+.userinput-choice-card span {
+  color: #f1f5ef;
+  font-size: 0.96rem;
+  font-weight: 500;
+}
+
+.userinput-choice-card--active {
+  border-color: rgba(136, 239, 174, 0.35);
+  background: rgba(136, 239, 174, 0.08);
+}
+
+.form-message {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.form-message--error {
+  color: #ffd7d7;
+  background: rgba(255, 107, 107, 0.12);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+}
+
+.userinput-actions,
+.userinput-saved-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.btn-ghost {
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: inherit;
+  color: rgba(238, 243, 238, 0.88);
 }
 
-.secondary-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 700px) {
+  .userinput-page {
+    padding: 16px 12px;
+  }
+
+  .userinput-center-shell {
+    min-height: calc(100vh - 32px);
+  }
+
+  .userinput-focus-card {
+    padding: 20px;
+    border-radius: 22px;
+  }
+
+  .userinput-title {
+    font-size: clamp(1.65rem, 8vw, 2.3rem);
+  }
+
+  .userinput-multiselect {
+    grid-template-columns: 1fr;
+  }
+
+  .userinput-actions .btn,
+  .userinput-saved-actions .btn {
+    width: 100%;
+  }
 }

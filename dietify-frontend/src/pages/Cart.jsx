@@ -1,127 +1,134 @@
+import { useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 import {
   removeFromCart,
+  increaseQuantity,
+  decreaseQuantity,
   clearCart,
 } from "../store/slices/cartSlice";
-
-import { exportCartToExcel } from "../utils/exportExcel";
-import { exportCartToPdf } from "../utils/exportPdf";
 
 import "../styles/Cart.css";
 
 export default function Cart() {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-
-  // Read cart items from Redux
   const cartItems = useSelector((state) => state.cart.items);
 
-  const handleRemove = (itemName) => {
-    dispatch(removeFromCart(itemName));
-  };
+  const totalItems = useMemo(() => {
+    return cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  }, [cartItems]);
 
-  const handleClearCart = () => {
-    dispatch(clearCart());
-  };
+  function handleDownloadExcel() {
+    const data = cartItems.map((item, index) => ({
+      SlNo: index + 1,
+      Ingredient: item.name,
+      Quantity: item.quantity,
+      Unit: item.unit,
+    }));
 
-  const handleExportExcel = () => {
-    exportCartToExcel(cartItems);
-  };
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
 
-  const handleExportPdf = () => {
-    exportCartToPdf(cartItems);
-  };
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Shopping List");
+    XLSX.writeFile(workbook, "dietify-shopping-list.xlsx");
+  }
+
+  function handleDownloadPDF() {
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text("Dietify Shopping List", 14, 18);
+
+    autoTable(doc, {
+      startY: 28,
+      head: [["#", "Ingredient", "Quantity", "Unit"]],
+      body: cartItems.map((item, index) => [
+        index + 1,
+        item.name,
+        item.quantity,
+        item.unit,
+      ]),
+    });
+
+    doc.save("dietify-shopping-list.pdf");
+  }
 
   return (
     <main className="cart-page">
-      <section className="cart-card">
+      <section className="cart-shell">
         <div className="cart-header">
           <div>
-            <p className="cart-kicker">Dietify Cart</p>
-            <h1>Your Ingredient List</h1>
+            <p className="cart-kicker">Smart Grocery Planner</p>
+            <h1>Your Shopping Cart</h1>
             <p className="cart-subtitle">
-              This cart stores ingredients from your selected recipes, ready for shopping or export.
+              Review ingredients added from your weekly meal plan and download them as PDF or Excel.
             </p>
           </div>
 
-          <button
-            type="button"
-            className="secondary-btn"
-            onClick={() => navigate("/result")}
-          >
-            Back to Results
-          </button>
+          <div className="cart-summary-card">
+            <span>Total Items</span>
+            <strong>{totalItems}</strong>
+          </div>
         </div>
 
         {cartItems.length === 0 ? (
           <div className="cart-empty">
-            <div className="cart-empty-icon">🛒</div>
             <h2>Your cart is empty</h2>
-            <p>
-              Add ingredients from recommended recipes on the results page to build your shopping list.
-            </p>
-
-            <button
-              type="button"
-              className="primary-btn"
-              onClick={() => navigate("/result")}
-            >
-              Go to Results
-            </button>
+            <p>Add ingredients from your meal plan to build your shopping list.</p>
           </div>
         ) : (
           <>
-            <div className="cart-toolbar">
-              <p className="cart-count">
-                {cartItems.length} ingredient{cartItems.length > 1 ? "s" : ""} in cart
-              </p>
+            <div className="cart-actions">
+              <button className="primary-btn" onClick={handleDownloadPDF}>
+                Download PDF
+              </button>
 
-              <div className="cart-toolbar-actions">
-                <button
-                  type="button"
-                  className="ghost-btn"
-                  onClick={handleExportExcel}
-                >
-                  Export Excel
-                </button>
+              <button className="secondary-btn" onClick={handleDownloadExcel}>
+                Download Excel
+              </button>
 
-                <button
-                  type="button"
-                  className="ghost-btn"
-                  onClick={handleExportPdf}
-                >
-                  Export PDF
-                </button>
-
-                <button
-                  type="button"
-                  className="danger-btn"
-                  onClick={handleClearCart}
-                >
-                  Clear Cart
-                </button>
-              </div>
+              <button className="danger-btn" onClick={() => dispatch(clearCart())}>
+                Clear Cart
+              </button>
             </div>
 
-            <div className="cart-list">
+            <div className="cart-grid">
               {cartItems.map((item) => (
-                <article key={item.name} className="cart-item">
-                  <div className="cart-item-info">
-                    <h3>{item.name}</h3>
-                    <p>
-                      Quantity: <strong>{item.quantity}</strong> {item.unit}
-                    </p>
+                <article className="cart-item-card" key={item.id}>
+                  <div className="cart-item-top">
+                    <div>
+                      <h3>{item.name}</h3>
+                      <p>{item.unit}</p>
+                    </div>
+
+                    <button
+                      className="remove-btn"
+                      onClick={() => dispatch(removeFromCart(item.id))}
+                    >
+                      Remove
+                    </button>
                   </div>
 
-                  <button
-                    type="button"
-                    className="secondary-btn"
-                    onClick={() => handleRemove(item.name)}
-                  >
-                    Remove
-                  </button>
+                  <div className="cart-qty-row">
+                    <button
+                      className="qty-btn"
+                      onClick={() => dispatch(decreaseQuantity(item.id))}
+                    >
+                      −
+                    </button>
+
+                    <span className="qty-value">{item.quantity}</span>
+
+                    <button
+                      className="qty-btn"
+                      onClick={() => dispatch(increaseQuantity(item.id))}
+                    >
+                      +
+                    </button>
+                  </div>
                 </article>
               ))}
             </div>

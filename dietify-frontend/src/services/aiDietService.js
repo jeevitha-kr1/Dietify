@@ -1,10 +1,15 @@
-import OpenAI from "openai";
-import openai from "./openaiClient";
+import { GoogleGenAI } from "@google/genai";
+
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const ai = new GoogleGenAI({ apiKey });
+
 function buildDietPrompt(profile, metrics) {
   return `
-Create a realistic and beginner-friendly personalized diet plan.
+You are a nutrition planning AI.
 
-User profile:
+Create a realistic, beginner-friendly, personalized 7-day diet plan.
+
+USER PROFILE:
 - Age: ${profile.age}
 - Gender: ${profile.gender}
 - Height: ${profile.height} cm
@@ -16,93 +21,160 @@ User profile:
 - Meals Per Day: ${profile.mealsPerDay}
 - Preferred Cuisine: ${profile.preferredCuisine || "Mixed"}
 - Allergies: ${
-    Array.isArray(profile.allergies) && profile.allergies.length > 0
+    Array.isArray(profile.allergies) && profile.allergies.length
       ? profile.allergies.join(", ")
       : "None"
   }
 - Health Conditions: ${
-    Array.isArray(profile.healthConditions) && profile.healthConditions.length > 0
+    Array.isArray(profile.healthConditions) && profile.healthConditions.length
       ? profile.healthConditions.join(", ")
       : "None"
   }
 
-Calculated health metrics:
-- BMI: ${metrics.bmi}
-- BMI Category: ${metrics.bmiCategory}
-- Recommended Daily Calories: ${metrics.calories}
-- Protein: ${metrics.macros.protein} g
-- Carbs: ${metrics.macros.carbs} g
-- Fats: ${metrics.macros.fats} g
+CALCULATED METRICS:
+- BMI: ${metrics?.bmi ?? "N/A"}
+- Estimated Daily Calories: ${metrics?.calories ?? "N/A"}
 
-Return ONLY valid JSON in exactly this structure:
+IMPORTANT RULES:
+1. Generate exactly 7 days: Monday to Sunday.
+2. Respect diet preference, allergies, and health conditions.
+3. Keep meals practical, affordable, and easy for beginners.
+4. Use common ingredients.
+5. Keep calorie estimates realistic.
+6. The groceryList must contain UNIQUE ingredients only.
+7. Do not repeat the same meal too often across the week.
+8. Return ONLY valid JSON.
+9. Do NOT include markdown, code fences, explanations, or extra text.
+
+MEAL RULE:
+- If Meals Per Day is 4 or more, include breakfast, lunch, dinner, and snack.
+- If Meals Per Day is 3, include breakfast, lunch, and dinner.
+- If Meals Per Day is 2, include breakfast and dinner.
+- If Meals Per Day is 1, include one main meal as lunch.
+
+EXPECTED JSON FORMAT:
 {
-  "summary": "short paragraph",
-  "mealPlan": [
+  "days": [
     {
-      "mealType": "Breakfast",
-      "title": "Meal title",
-      "calories": 400,
-      "ingredients": ["ingredient 1", "ingredient 2"]
+      "day": "Monday",
+      "dailyCalories": 1600,
+      "meals": {
+        "breakfast": {
+          "title": "Oats with banana",
+          "calories": 350,
+          "ingredients": ["Oats", "Banana", "Milk"]
+        },
+        "lunch": {
+          "title": "Rice with dal",
+          "calories": 500,
+          "ingredients": ["Rice", "Dal", "Onion"]
+        },
+        "dinner": {
+          "title": "Paneer salad bowl",
+          "calories": 450,
+          "ingredients": ["Paneer", "Tomato", "Cucumber"]
+        },
+        "snack": {
+          "title": "Apple with peanut butter",
+          "calories": 200,
+          "ingredients": ["Apple", "Peanut Butter"]
+        }
+      }
     }
   ],
-  "tips": ["tip 1", "tip 2"],
-  "recipes": [
-    {
-      "name": "Recipe name",
-      "mealType": "Lunch",
-      "calories": 550,
-      "ingredients": ["ingredient 1", "ingredient 2"],
-      "instructions": ["step 1", "step 2"]
-    }
-  ]
+  "groceryList": ["Oats", "Banana", "Milk"],
+  "tips": ["Tip 1", "Tip 2", "Tip 3"]
 }
-
-Rules:
-- Return JSON only
-- No markdown
-- No explanation outside JSON
-- Respect allergies and diet preference
-- Keep meals practical and simple
 `;
 }
 
-// Main function used by Result page
+function extractJson(text) {
+  const cleaned = text
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```$/i, "")
+    .trim();
+
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+
+  if (firstBrace === -1 || lastBrace === -1) {
+    throw new Error("AI response did not contain valid JSON.");
+  }
+
+  return cleaned.slice(firstBrace, lastBrace + 1);
+}
+
+function dedupeAndNormalizeGroceryList(groceryList) {
+  if (!Array.isArray(groceryList)) return [];
+
+  const seen = new Set();
+
+  return groceryList
+    .map((item) => String(item).trim())
+    .filter(Boolean)
+    .filter((item) => {
+      const key = item.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
+function validateMealPlanShape(data) {
+  if (!data || typeof data !== "object") {
+    throw new Error("AI returned invalid data.");
+  }
+
+  if (!Array.isArray(data.days) || data.days.length !== 7) {
+    throw new Error("AI response must contain exactly 7 days.");
+  }
+
+  if (!Array.isArray(data.tips) || data.tips.length === 0) {
+    throw new Error("AI response must contain health tips.");
+  }
+
+  if (!Array.isArray(data.groceryList)) {
+    data.groceryList = [];
+  }
+
+  return data;
+}
+
 export async function generateAIMealPlan(profile, metrics) {
+  if (!apiKey) {
+    throw new Error("Missing VITE_GEMINI_API_KEY in .env");
+  }
+
+  const prompt = buildDietPrompt(profile, metrics);
+
   try {
-    // Helpful debug check
-    console.log("OpenAI key exists:", !!import.meta.env.VITE_OPENAI_API_KEY);
-
-    const prompt = buildDietPrompt(profile, metrics);
-
-    const response = await openai.responses.create({
-      model: "gpt-4.1-mini",
-      input: [
-        {
-          role: "system",
-          content:
-            "You are a nutrition assistant. Return only valid JSON. Do not use markdown. Do not add extra explanation.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
     });
 
-    console.log("OpenAI raw response object:", response);
-    console.log("OpenAI output text:", response.output_text);
+    const text = response.text || "";
 
-    return response.output_text;
+    console.log("RAW GEMINI RESPONSE:", text);
+
+    const jsonText = extractJson(text);
+
+    console.log("CLEANED GEMINI RESPONSE:", jsonText);
+
+    const parsed = JSON.parse(jsonText);
+
+    parsed.groceryList = dedupeAndNormalizeGroceryList(parsed.groceryList);
+
+    validateMealPlanShape(parsed);
+
+    console.log("PARSED GEMINI RESPONSE:", parsed);
+
+    return parsed;
   } catch (error) {
-    console.error("OpenAI full error:", error);
-
-    if (error instanceof OpenAI.APIError) {
-      console.error("OpenAI status:", error.status);
-      console.error("OpenAI name:", error.name);
-      console.error("OpenAI message:", error.message);
-      console.error("OpenAI headers:", error.headers);
-    }
-
-    throw error;
+    console.error("Gemini meal plan generation failed:", error);
+    throw new Error(
+      "We could not generate your meal plan right now. Please try again."
+    );
   }
 }

@@ -1,49 +1,58 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-// Helper function to merge ingredients with the same name
-function mergeCartItems(existingItems, newItems) {
-  const mergedMap = new Map();
-
-  // Put existing items into map
-  existingItems.forEach((item) => {
-    mergedMap.set(item.name.toLowerCase(), { ...item });
-  });
-
-  // Merge incoming items
-  newItems.forEach((item) => {
-    const key = item.name.toLowerCase();
-
-    if (mergedMap.has(key)) {
-      const existing = mergedMap.get(key);
-
-      mergedMap.set(key, {
-        ...existing,
-        quantity: existing.quantity + item.quantity,
-      });
-    } else {
-      mergedMap.set(key, { ...item });
-    }
-  });
-
-  return Array.from(mergedMap.values());
-}
-
 const initialState = {
   items: [],
 };
+
+function normalizeName(name = "") {
+  return name.trim().toLowerCase();
+}
 
 const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
     addToCart(state, action) {
-      state.items = mergeCartItems(state.items, action.payload);
+      const incomingItems = Array.isArray(action.payload)
+        ? action.payload
+        : [action.payload];
+
+      incomingItems.forEach((item) => {
+        const existing = state.items.find(
+          (cartItem) => normalizeName(cartItem.name) === normalizeName(item.name)
+        );
+
+        if (existing) {
+          existing.quantity += item.quantity || 1;
+        } else {
+          state.items.push({
+            id: item.id || `${item.name}-${Date.now()}-${Math.random()}`,
+            name: item.name,
+            quantity: item.quantity || 1,
+            unit: item.unit || "item",
+          });
+        }
+      });
     },
 
     removeFromCart(state, action) {
-      state.items = state.items.filter(
-        (item) => item.name !== action.payload
-      );
+      state.items = state.items.filter((item) => item.id !== action.payload);
+    },
+
+    increaseQuantity(state, action) {
+      const item = state.items.find((i) => i.id === action.payload);
+      if (item) item.quantity += 1;
+    },
+
+    decreaseQuantity(state, action) {
+      const item = state.items.find((i) => i.id === action.payload);
+      if (!item) return;
+
+      if (item.quantity > 1) {
+        item.quantity -= 1;
+      } else {
+        state.items = state.items.filter((i) => i.id !== action.payload);
+      }
     },
 
     clearCart(state) {
@@ -52,6 +61,12 @@ const cartSlice = createSlice({
   },
 });
 
-export const { addToCart, removeFromCart, clearCart } = cartSlice.actions;
+export const {
+  addToCart,
+  removeFromCart,
+  increaseQuantity,
+  decreaseQuantity,
+  clearCart,
+} = cartSlice.actions;
 
 export default cartSlice.reducer;
