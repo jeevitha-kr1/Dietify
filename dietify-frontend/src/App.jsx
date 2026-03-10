@@ -20,6 +20,7 @@ export default function App() {
       <Route path="/about" element={<AboutUs />} />
       <Route path="/registration" element={<Registration />} />
       <Route path="/legal" element={<Legal />} />
+      <Route path="*" element={<h1 className="error">Page Not Found</h1>} />
 
       <Route
         path="/user-input"
