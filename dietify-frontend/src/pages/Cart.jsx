@@ -1,16 +1,14 @@
 import { useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-
 import {
   removeFromCart,
   increaseQuantity,
   decreaseQuantity,
   clearCart,
 } from "../store/slices/cartSlice";
-
 import "../styles/Cart.css";
 
 export default function Cart() {
@@ -21,27 +19,42 @@ export default function Cart() {
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);
   }, [cartItems]);
 
-  function handleDownloadExcel() {
-    const data = cartItems.map((item, index) => ({
-      SlNo: index + 1,
-      Ingredient: item.name,
-      Quantity: item.quantity,
-      Unit: item.unit,
-    }));
+  async function handleDownloadExcel() {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Shopping List");
 
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
+    sheet.columns = [
+      { header: "Sl No", key: "SlNo", width: 8 },
+      { header: "Ingredient", key: "Ingredient", width: 28 },
+      { header: "Quantity", key: "Quantity", width: 12 },
+      { header: "Unit", key: "Unit", width: 12 },
+    ];
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Shopping List");
-    XLSX.writeFile(workbook, "dietify-shopping-list.xlsx");
+    cartItems.forEach((item, index) => {
+      sheet.addRow({
+        SlNo: index + 1,
+        Ingredient: item.name,
+        Quantity: item.quantity,
+        Unit: item.unit,
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "dietify-shopping-list.xlsx";
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function handleDownloadPDF() {
     const doc = new jsPDF();
-
     doc.setFontSize(18);
     doc.text("Dietify Shopping List", 14, 18);
-
     autoTable(doc, {
       startY: 28,
       head: [["#", "Ingredient", "Quantity", "Unit"]],
@@ -52,7 +65,6 @@ export default function Cart() {
         item.unit,
       ]),
     });
-
     doc.save("dietify-shopping-list.pdf");
   }
 
@@ -67,7 +79,6 @@ export default function Cart() {
               Review ingredients added from your weekly meal plan and download them as PDF or Excel.
             </p>
           </div>
-
           <div className="cart-summary-card">
             <span>Total Items</span>
             <strong>{totalItems}</strong>
@@ -85,11 +96,9 @@ export default function Cart() {
               <button className="primary-btn" onClick={handleDownloadPDF}>
                 Download PDF
               </button>
-
               <button className="secondary-btn" onClick={handleDownloadExcel}>
                 Download Excel
               </button>
-
               <button className="danger-btn" onClick={() => dispatch(clearCart())}>
                 Clear Cart
               </button>
@@ -103,7 +112,6 @@ export default function Cart() {
                       <h3>{item.name}</h3>
                       <p>{item.unit}</p>
                     </div>
-
                     <button
                       className="remove-btn"
                       onClick={() => dispatch(removeFromCart(item.id))}
@@ -111,7 +119,6 @@ export default function Cart() {
                       Remove
                     </button>
                   </div>
-
                   <div className="cart-qty-row">
                     <button
                       className="qty-btn"
@@ -119,9 +126,7 @@ export default function Cart() {
                     >
                       −
                     </button>
-
                     <span className="qty-value">{item.quantity}</span>
-
                     <button
                       className="qty-btn"
                       onClick={() => dispatch(increaseQuantity(item.id))}

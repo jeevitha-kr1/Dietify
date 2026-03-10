@@ -115,9 +115,18 @@ export default function UserInput() {
     setAnswers((previous) => {
       const existingValues = previous[currentQuestion.id] || [];
 
-      const updatedValues = existingValues.includes(option)
-        ? existingValues.filter((item) => item !== option)
-        : [...existingValues, option];
+      if (option === "None") {
+        const alreadySelected = existingValues.includes("None");
+        return {
+          ...previous,
+          [currentQuestion.id]: alreadySelected ? [] : ["None"],
+        };
+      }
+
+      const withoutNone = existingValues.filter((item) => item !== "None");
+      const updatedValues = withoutNone.includes(option)
+        ? withoutNone.filter((item) => item !== option)
+        : [...withoutNone, option];
 
       return {
         ...previous,
@@ -425,7 +434,7 @@ export default function UserInput() {
                 Back
               </button>
 
-              {!currentQuestion.required ? (
+              {!currentQuestion.required && currentStep !== onboardingQuestions.length - 1 ? (
                 <button type="button" className="btn btn-ghost" onClick={handleSkip}>
                   Skip
                 </button>

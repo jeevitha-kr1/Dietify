@@ -132,7 +132,8 @@ export const onboardingQuestions = [
       "Diabetes",
       "High Blood Pressure",
       "Thyroid Issues",
-      "High Cholesterol"
+      "High Cholesterol",
+      "None"
     ]
   }
 
