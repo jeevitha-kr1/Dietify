@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 
 import Logo from "./pages/Logo";
 import Home from "./pages/Home";
@@ -15,12 +15,10 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Logo />} />
-
       <Route path="/home" element={<Home />} />
       <Route path="/about" element={<AboutUs />} />
       <Route path="/registration" element={<Registration />} />
       <Route path="/legal" element={<Legal />} />
-      <Route path="*" element={<h1 className="error">Page Not Found</h1>} />
 
       <Route
         path="/user-input"
@@ -49,7 +47,7 @@ export default function App() {
         }
       />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<h1>Page Not Found</h1>} />
     </Routes>
   );
 }

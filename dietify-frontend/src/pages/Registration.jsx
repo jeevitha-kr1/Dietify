@@ -4,7 +4,6 @@ import { useDispatch } from "react-redux";
 
 import { useAuth } from "../hooks/useAuth";
 import { createLocalUser, validateLocalLogin } from "../utils/auth";
-import { loginUser, logoutUser } from "../store/slices/authSlice";
 import { clearUserProfile } from "../store/slices/userSlice";
 import { clearResults } from "../store/slices/resultSlice";
 import { clearCart } from "../store/slices/cartSlice";
@@ -212,7 +211,10 @@ export default function Registration() {
       setError("");
       setSuccessMessage("");
 
-      const validatedUser = await validateLocalLogin(formData.email, formData.password);
+      const validatedUser = await validateLocalLogin(
+        formData.email,
+        formData.password
+      );
 
       if (!validatedUser) {
         setError("Invalid email or password.");
@@ -220,7 +222,6 @@ export default function Registration() {
       }
 
       login(validatedUser, formData.rememberMe);
-      dispatch(loginUser(validatedUser.email));
       setSuccessMessage("Login successful.");
       navigate("/user-input");
     } catch (loginError) {
@@ -233,7 +234,6 @@ export default function Registration() {
 
   function handleLogout() {
     logout();
-    dispatch(logoutUser());
     dispatch(clearUserProfile());
     dispatch(clearResults());
     dispatch(clearCart());
@@ -244,7 +244,6 @@ export default function Registration() {
 
   function handleDeleteProfile() {
     deleteProfile();
-    dispatch(logoutUser());
     dispatch(clearUserProfile());
     dispatch(clearResults());
     dispatch(clearCart());
@@ -373,6 +372,7 @@ export default function Registration() {
                       value={formData.fullName}
                       onChange={handleChange}
                       placeholder="Enter your full name"
+                      autoComplete="name"
                       className={fieldErrors.fullName ? "input-error" : ""}
                     />
                     {fieldErrors.fullName && (
@@ -390,6 +390,7 @@ export default function Registration() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Enter your email"
+                    autoComplete="email"
                     className={fieldErrors.email ? "input-error" : ""}
                   />
                   {fieldErrors.email && (
@@ -407,11 +408,15 @@ export default function Registration() {
                       value={formData.password}
                       onChange={handleChange}
                       placeholder="Enter your password"
+                      autoComplete={
+                        mode === "register" ? "new-password" : "current-password"
+                      }
                       className={fieldErrors.password ? "input-error" : ""}
                     />
                     <button
                       type="button"
                       className="password-toggle"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
                       onClick={() => setShowPassword((prev) => !prev)}
                     >
                       {showPassword ? "Hide" : "Show"}
@@ -433,11 +438,17 @@ export default function Registration() {
                         value={formData.confirmPassword}
                         onChange={handleChange}
                         placeholder="Re-enter your password"
+                        autoComplete="new-password"
                         className={fieldErrors.confirmPassword ? "input-error" : ""}
                       />
                       <button
                         type="button"
                         className="password-toggle"
+                        aria-label={
+                          showConfirmPassword
+                            ? "Hide confirm password"
+                            : "Show confirm password"
+                        }
                         onClick={() => setShowConfirmPassword((prev) => !prev)}
                       >
                         {showConfirmPassword ? "Hide" : "Show"}
