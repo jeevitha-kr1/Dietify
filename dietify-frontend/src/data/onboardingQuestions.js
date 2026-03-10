@@ -93,7 +93,8 @@ export const onboardingQuestions = [
       "Dairy",
       "Gluten",
       "Soy",
-      "Shellfish"
+      "Shellfish",
+      "None"
     ]
   },
 

@@ -417,7 +417,7 @@ export default function UserInput() {
           <div className="userinput-main">
             <h1 className="userinput-title">{currentQuestion.label}</h1>
             <p className="userinput-helper">
-              {currentQuestion.required ? "Required" : "Optional"}
+              {currentQuestion.required ? "Required" : ""}
             </p>
 
             <div className="userinput-field-wrap">{renderQuestionField()}</div>
@@ -434,7 +434,7 @@ export default function UserInput() {
                 Back
               </button>
 
-              {!currentQuestion.required && currentStep !== onboardingQuestions.length - 1 ? (
+              {!currentQuestion.required && currentStep !== onboardingQuestions.length - 1 && currentStep !== 8 ? (
                 <button type="button" className="btn btn-ghost" onClick={handleSkip}>
                   Skip
                 </button>
