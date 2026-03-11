@@ -1,6 +1,6 @@
 // src/pages/__tests__/Result.test.jsx
 
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { MemoryRouter } from "react-router-dom";
 import { configureStore } from "@reduxjs/toolkit";
@@ -11,9 +11,16 @@ import cartReducer from "../../store/slices/cartSlice";
 import userReducer from "../../store/slices/userSlice";
 import resultReducer from "../../store/slices/resultSlice";
 
-// mocking the AI service so it doesnt actually call gemini during tests
+const mockNavigate = vi.fn();
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return { ...actual, useNavigate: () => mockNavigate };
+});
+
 vi.mock("../../services/aiDietService", () => ({
-  generateAIMealPlan: vi.fn(() => Promise.resolve({ days: [], tips: [], groceryList: [] })),
+  generateAIMealPlan: vi.fn(() =>
+    Promise.resolve({ days: [], tips: [], groceryList: [] })
+  ),
 }));
 
 const mockProfile = {
@@ -69,7 +76,6 @@ const mockWeeklyPlan = [
   },
 ];
 
-// helper to build store with custom state
 function buildStore(aiOverride = {}) {
   return configureStore({
     reducer: {
@@ -237,4 +243,146 @@ test("cart count starts at 0", () => {
 test("shows no meal plan message when weeklyPlan is empty", () => {
   renderResult({ weeklyPlan: [] });
   expect(screen.getByText(/no weekly meal plan available yet/i)).toBeInTheDocument();
+});
+
+// --- redirect ---
+
+test("redirects to user-input if profile is missing", () => {
+  const store = configureStore({
+    reducer: {
+      user: userReducer,
+      result: resultReducer,
+      cart: cartReducer,
+      ai: aiReducer,
+    },
+    preloadedState: {
+      user: { profile: {} },
+      result: mockResults,
+      cart: { items: [] },
+      ai: { loading: false, summary: "", weeklyPlan: [], tips: [], groceryList: [] },
+    },
+  });
+
+  render(
+    <Provider store={store}>
+      <MemoryRouter>
+        <Result />
+      </MemoryRouter>
+    </Provider>
+  );
+
+  expect(mockNavigate).toHaveBeenCalledWith("/user-input");
+});
+
+// --- AI failure fallback ---
+
+test("shows fallback data when AI call fails", async () => {
+  const { generateAIMealPlan } = await import("../../services/aiDietService");
+  generateAIMealPlan.mockRejectedValueOnce(new Error("API failed"));
+
+  const store = configureStore({
+    reducer: {
+      user: userReducer,
+      result: resultReducer,
+      cart: cartReducer,
+      ai: aiReducer,
+    },
+    preloadedState: {
+      user: { profile: mockProfile },
+      result: mockResults,
+      cart: { items: [] },
+      ai: { loading: false, summary: "", weeklyPlan: [], tips: [], groceryList: [] },
+    },
+  });
+
+  render(
+    <Provider store={store}>
+      <MemoryRouter>
+        <Result />
+      </MemoryRouter>
+    </Provider>
+  );
+
+  await waitFor(() => {
+    expect(
+      screen.getByText(/ai is temporarily unavailable/i)
+    ).toBeInTheDocument();
+  });
+});
+
+// --- empty days from AI ---
+
+test("shows no meal plan when AI returns empty days", async () => {
+  const { generateAIMealPlan } = await import("../../services/aiDietService");
+  generateAIMealPlan.mockResolvedValueOnce({ days: [], tips: [], groceryList: [] });
+
+  const store = configureStore({
+    reducer: {
+      user: userReducer,
+      result: resultReducer,
+      cart: cartReducer,
+      ai: aiReducer,
+    },
+    preloadedState: {
+      user: { profile: mockProfile },
+      result: mockResults,
+      cart: { items: [] },
+      ai: { loading: false, summary: "", weeklyPlan: [], tips: [], groceryList: [] },
+    },
+  });
+
+  render(
+    <Provider store={store}>
+      <MemoryRouter>
+        <Result />
+      </MemoryRouter>
+    </Provider>
+  );
+
+  await waitFor(() => {
+    expect(
+      screen.getByText(/no weekly meal plan available yet/i)
+    ).toBeInTheDocument();
+  });
+});
+
+// --- empty ingredients ---
+
+test("does not show add button when meal has no ingredients", () => {
+  renderResult({
+    weeklyPlan: [
+      {
+        day: "Monday",
+        dailyCalories: 1500,
+        meals: [
+          {
+            mealType: "Breakfast",
+            title: "Empty meal",
+            calories: 300,
+            ingredients: [],
+          },
+        ],
+      },
+    ],
+  });
+
+  expect(
+    screen.queryByRole("button", { name: /add ingredients to cart/i })
+  ).not.toBeInTheDocument();
+});
+
+// --- empty meals for a day ---
+
+test("shows no meals message when day has empty meals array", () => {
+  renderResult({
+    weeklyPlan: [
+      {
+        day: "Monday",
+        dailyCalories: 1500,
+        meals: [],
+      },
+    ],
+  });
+
+  expect(screen.getByText(/no meals available for this day/i)).toBeInTheDocument();
 });
