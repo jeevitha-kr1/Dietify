@@ -39,9 +39,7 @@ export default function UserInput() {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState(DEFAULT_ANSWERS);
   const [error, setError] = useState("");
-  const [showSavedProfileCard, setShowSavedProfileCard] = useState(false);
-  const [isEditingSavedAnswers, setIsEditingSavedAnswers] = useState(false);
-
+  
   const currentQuestion = onboardingQuestions[currentStep];
 
   const storageKey = useMemo(() => {
@@ -68,33 +66,39 @@ export default function UserInput() {
   };
 
   useEffect(() => {
-    if (!storageKey) return;
+  if (!storageKey) return;
 
-    try {
-      const savedAnswersRaw = localStorage.getItem(storageKey);
+  try {
+    const wantsReset = location.state?.reset === true;
 
-      if (!savedAnswersRaw) return;
-
-      const savedAnswers = JSON.parse(savedAnswersRaw);
-      const mergedAnswers = {
-        ...DEFAULT_ANSWERS,
-        ...savedAnswers,
-      };
-
-      setAnswers(mergedAnswers);
-
-      const wantsEditMode = location.state?.editSavedProfile === true;
-
-      if (isProfileComplete(mergedAnswers) && !wantsEditMode) {
-        setShowSavedProfileCard(true);
-      } else {
-        setShowSavedProfileCard(false);
-        setIsEditingSavedAnswers(wantsEditMode);
-      }
-    } catch (loadError) {
-      console.error("Failed to load saved answers:", loadError);
+    if (wantsReset) {
+      setAnswers(DEFAULT_ANSWERS);
+      setCurrentStep(0);
+      return; // ✅ stop here, don't load saved answers
     }
-  }, [storageKey, location.state]);
+
+    const savedAnswersRaw = localStorage.getItem(storageKey);
+
+    if (!savedAnswersRaw) return;
+
+    const savedAnswers = JSON.parse(savedAnswersRaw);
+    const mergedAnswers = {
+      ...DEFAULT_ANSWERS,
+      ...savedAnswers,
+    };
+
+    setAnswers(mergedAnswers);
+
+    const wantsEditMode = location.state?.editSavedProfile === true;
+
+    if (wantsEditMode) {
+      setCurrentStep(0);
+    }
+
+  } catch (loadError) {
+    console.error("Failed to load saved answers:", loadError);
+  }
+}, [storageKey, location.state]);
 
   const saveAnswersLocally = (data) => {
     if (!storageKey) return;
@@ -269,18 +273,6 @@ export default function UserInput() {
     navigate("/result");
   };
 
-  const handleContinueWithSavedAnswers = () => {
-    buildAndSaveResults();
-    navigate("/result");
-  };
-
-  const handleEditSavedAnswers = () => {
-    setShowSavedProfileCard(false);
-    setIsEditingSavedAnswers(true);
-    setCurrentStep(0);
-    setError("");
-  };
-
   const handleResetSavedAnswers = () => {
     if (storageKey) {
       localStorage.removeItem(storageKey);
@@ -289,8 +281,6 @@ export default function UserInput() {
     setAnswers(DEFAULT_ANSWERS);
     setCurrentStep(0);
     setError("");
-    setShowSavedProfileCard(false);
-    setIsEditingSavedAnswers(false);
 
     dispatch(clearUserProfile());
     dispatch(clearResults());
@@ -359,52 +349,6 @@ export default function UserInput() {
 
     return null;
   };
-
-  if (showSavedProfileCard && !isEditingSavedAnswers) {
-    return (
-      <main className="userinput-page">
-        <section className="userinput-center-shell">
-          <section className="userinput-focus-card glass-card userinput-saved-card">
-            <p className="userinput-kicker">Profile already saved</p>
-            <h1 className="userinput-title userinput-title--saved">
-              Welcome back, {currentUser?.fullName?.split(" ")[0] || "there"}.
-            </h1>
-            <p className="userinput-helper userinput-helper--saved">
-              Your nutrition profile is already saved on this browser. You can
-              continue with your saved answers, update them, or reset everything
-              and start again.
-            </p>
-
-            <div className="userinput-saved-actions">
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleContinueWithSavedAnswers}
-              >
-                Continue
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleEditSavedAnswers}
-              >
-                Update Answers
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={handleResetSavedAnswers}
-              >
-                Reset Saved Answers
-              </button>
-            </div>
-          </section>
-        </section>
-      </main>
-    );
-  }
 
   return (
     <main className="userinput-page">

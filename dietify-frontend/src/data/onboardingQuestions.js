@@ -87,7 +87,7 @@ export const onboardingQuestions = [
     id: "allergies",
     label: "Do you have any food allergies?",
     type: "multiselect",
-    required: false,
+    required: true,
     options: [
       "Peanuts",
       "Dairy",
@@ -128,7 +128,7 @@ export const onboardingQuestions = [
     id: "healthConditions",
     label: "Do you have any health conditions?",
     type: "multiselect",
-    required: false,
+    required: true,
     options: [
       "Diabetes",
       "High Blood Pressure",
