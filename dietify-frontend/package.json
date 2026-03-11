@@ -9,9 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
-  "cypress:open": "cypress open",
-  "cypress:run": "cypress run"
-
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run"
   },
   "dependencies": {
     "@google/genai": "^1.44.0",
@@ -34,6 +33,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "@vitest/coverage-v8": "^4.0.18",
     "cypress": "^15.11.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
