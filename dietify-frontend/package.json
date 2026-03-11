@@ -10,8 +10,12 @@
     "preview": "vite preview",
     "test": "vitest",
     "cypress:open": "cypress open",
+<<<<<<< HEAD
     "cypress:run": "cypress run",
     "coverage:report": "nyc report --reporter=html --reporter=text-summary"
+=======
+    "cypress:run": "cypress run"
+>>>>>>> e51ad15dc0859d1ba2daf7e3cc8044ecb0df628b
   },
   "dependencies": {
     "@google/genai": "^1.44.0",
@@ -35,6 +39,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "@vitest/coverage-v8": "^4.0.18",
     "cypress": "^15.11.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
