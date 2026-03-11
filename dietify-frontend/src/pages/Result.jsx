@@ -4,11 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { generateAIMealPlan } from "../services/aiDietService";
 import { setAiData, setAiLoading } from "../store/slices/aiSlice";
 import { addToCart } from "../store/slices/cartSlice";
-import { clearUserProfile } from "../store/slices/userSlice";
-import { clearResults } from "../store/slices/resultSlice";
-import { clearCart } from "../store/slices/cartSlice";
-import { clearAiData } from "../store/slices/aiSlice";
-
 import "../styles/Result.css";
 
 const FALLBACK_AI_DATA = {
@@ -106,14 +101,10 @@ export default function Result() {
   const results = useSelector((state) => state.result);
   const aiData = useSelector((state) => state.ai);
   const cartItems = useSelector((state) => state.cart.items);
-  const currentUser = useSelector((state) => state.user.currentUser);
-  const storageKey = currentUser?.email ? `dietify_user_profile_${currentUser.email}` : null;
-
 
   const [error, setError] = useState("");
   const [activeDay, setActiveDay] = useState("Monday");
   const [cartMessage, setCartMessage] = useState("");
-  const [showBackModal, setShowBackModal] = useState(false);
 
   useEffect(() => {
     async function fetchMealPlan() {
@@ -197,23 +188,9 @@ export default function Result() {
     }
   }
 
-  function handleUpdateSelections() {
-  setShowBackModal(false);
-  navigate("/user-input", { state: { editSavedProfile: true } });
-}
-
-function handleResetSelections() {
-  setShowBackModal(false);
-  if (storageKey) {
-    localStorage.removeItem(storageKey);
+  function handleBackToUserInput() {
+    navigate("/user-input");
   }
-  navigate("/user-input", { state: { reset: true } });
-  dispatch(clearUserProfile());
-  dispatch(clearResults());
-  dispatch(clearCart());
-  dispatch(clearAiData());
-  
-}
 
   return (
     <main className="result-page">
@@ -241,7 +218,7 @@ function handleResetSelections() {
               <button
                 type="button"
                 className="result-top-action"
-                onClick={() => setShowBackModal(true)}
+                onClick={handleBackToUserInput}
               >
                 Back
               </button>
@@ -395,24 +372,6 @@ function handleResetSelections() {
           {error ? <p className="error">{error}</p> : null}
         </section>
       </section>
-      {showBackModal ? (
-  <div className="modal-overlay">
-    <div className="modal-card glass-card">
-      <h2>What would you like to do?</h2>
-      <div className="modal-actions">
-        <button type="button" className="btn btn-primary" onClick={() => setShowBackModal(false)}>
-          Results
-        </button>
-        <button type="button" className="btn btn-secondary" onClick={handleUpdateSelections}>
-          Update Selections
-        </button>
-        <button type="button" className="btn btn-ghost" onClick={handleResetSelections}>
-          Reset Selections
-        </button>
-      </div>
-    </div>
-  </div>
-) : null}
     </main>
   );
 }
