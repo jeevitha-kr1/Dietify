@@ -1,25 +1,31 @@
-export function calculateMacros(calories, goal) {
+export function calculateMacros(calories, profile) {
+  const safeCalories = Number(calories) || 0;
+  const safeWeight = Number(profile?.weight) || 0;
+  const safeGoal = String(profile?.goal || "").trim().toLowerCase();
 
-  let proteinRatio = 0.30;
-  let carbRatio = 0.40;
-  let fatRatio = 0.30;
+  let proteinPerKg = 1.6;
+  let fatPerKg = 0.8;
 
-  // Adjust ratios based on goal
-  if (goal === "Fat Loss") {
-    proteinRatio = 0.35;
-    carbRatio = 0.35;
-    fatRatio = 0.30;
+  if (safeGoal === "fat loss") {
+    proteinPerKg = 2.0;
+    fatPerKg = 0.8;
+  } else if (safeGoal === "muscle gain") {
+    proteinPerKg = 1.8;
+    fatPerKg = 0.9;
   }
 
-  if (goal === "Muscle Gain") {
-    proteinRatio = 0.30;
-    carbRatio = 0.45;
-    fatRatio = 0.25;
-  }
+  const protein = Math.round(safeWeight * proteinPerKg);
+  const fats = Math.round(safeWeight * fatPerKg);
+
+  const proteinCalories = protein * 4;
+  const fatCalories = fats * 9;
+  const remainingCalories = safeCalories - proteinCalories - fatCalories;
+
+  const carbs = Math.max(50, Math.round(remainingCalories / 4));
 
   return {
-    protein: Math.round((calories * proteinRatio) / 4),
-    carbs: Math.round((calories * carbRatio) / 4),
-    fats: Math.round((calories * fatRatio) / 9)
+    protein,
+    carbs,
+    fats,
   };
 }

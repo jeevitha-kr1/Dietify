@@ -49,6 +49,50 @@ const FALLBACK_AI_DATA = {
   groceryList: [],
 };
 
+function transformAIResponse(data) {
+  const sourceDays = Array.isArray(data?.days) ? data.days : [];
+
+  if (sourceDays.length === 0) {
+    return {
+      summary: "Your personalized weekly meal plan is ready.",
+      weeklyPlan: [],
+      tips: Array.isArray(data?.tips) ? data.tips : [],
+      groceryList: Array.isArray(data?.groceryList) ? data.groceryList : [],
+    };
+  }
+
+  const mealOrder = ["breakfast", "lunch", "dinner", "snack"];
+
+  const weeklyPlan = sourceDays.map((dayObj) => {
+    const mealsObject = dayObj?.meals || {};
+
+    const meals = mealOrder
+      .filter((key) => mealsObject[key]?.title)
+      .map((key) => ({
+        mealType: key.charAt(0).toUpperCase() + key.slice(1),
+        title: mealsObject[key]?.title || "",
+        calories: mealsObject[key]?.calories || "",
+        ingredients: Array.isArray(mealsObject[key]?.ingredients)
+          ? mealsObject[key].ingredients
+          : [],
+      }));
+
+    return {
+      day: dayObj.day || "Day",
+      dailyCalories: dayObj.dailyCalories || "N/A",
+      meals,
+    };
+  });
+
+  return {
+    summary:
+      "Here is your AI-generated 7-day meal plan based on your profile and goals.",
+    weeklyPlan,
+    tips: Array.isArray(data?.tips) ? data.tips : [],
+    groceryList: Array.isArray(data?.groceryList) ? data.groceryList : [],
+  };
+}
+
 export default function Result() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -96,7 +140,7 @@ export default function Result() {
     if (!aiData.weeklyPlan || aiData.weeklyPlan.length === 0) {
       fetchMealPlan();
     }
-  }, [dispatch, navigate, profile, results]);
+  }, [dispatch, navigate, profile, results, aiData.weeklyPlan]);
 
   useEffect(() => {
     if (!cartMessage) return;
@@ -107,68 +151,6 @@ export default function Result() {
 
     return () => clearTimeout(timer);
   }, [cartMessage]);
-
-  function transformAIResponse(data) {
-    const sourceDays = Array.isArray(data?.days) ? data.days : [];
-
-    if (sourceDays.length === 0) {
-      return {
-        summary: "Your personalized weekly meal plan is ready.",
-        weeklyPlan: [],
-        tips: Array.isArray(data?.tips) ? data.tips : [],
-        groceryList: Array.isArray(data?.groceryList) ? data.groceryList : [],
-      };
-    }
-
-    const mealOrder = ["breakfast", "lunch", "dinner", "snack"];
-
-    const weeklyPlan = sourceDays.map((dayObj) => {
-      const mealsObject = dayObj?.meals || {};
-
-      const meals = mealOrder
-        .filter((key) => mealsObject[key]?.title)
-        .map((key) => ({
-          mealType: key.charAt(0).toUpperCase() + key.slice(1),
-          title: mealsObject[key]?.title || "",
-          calories: mealsObject[key]?.calories || "",
-          ingredients: Array.isArray(mealsObject[key]?.ingredients)
-            ? mealsObject[key].ingredients
-            : [],
-        }));
-
-      return {
-        day: dayObj.day || "Day",
-        dailyCalories: dayObj.dailyCalories || "N/A",
-        meals,
-      };
-    });
-
-    return {
-      summary:
-        "Here is your AI-generated 7-day meal plan based on your profile and goals.",
-      weeklyPlan,
-      tips: Array.isArray(data?.tips) ? data.tips : [],
-      groceryList: Array.isArray(data?.groceryList) ? data.groceryList : [],
-    };
-  }
-
-  function convertIngredients(ingredients = []) {
-    return ingredients.map((ingredient, index) => ({
-      id: `${ingredient}-${index}`,
-      name: ingredient,
-      quantity: 1,
-      unit: "item",
-    }));
-  }
-
-  function handleAddMealIngredients(meal) {
-    const items = convertIngredients(meal.ingredients || []);
-
-    if (items.length > 0) {
-      dispatch(addToCart(items));
-      setCartMessage(`${meal.mealType} ingredients added to cart`);
-    }
-  }
 
   const days = useMemo(() => {
     return aiData.weeklyPlan?.map((item) => item.day) || [];
@@ -188,12 +170,36 @@ export default function Result() {
     }
   }, [days, activeDay]);
 
+  function convertIngredients(ingredients = []) {
+    return ingredients.map((ingredient, index) => ({
+      id: `${ingredient}-${index}`,
+      name: ingredient,
+      quantity: 1,
+      unit: "item",
+    }));
+  }
+
+  function handleAddMealIngredients(meal) {
+    const items = convertIngredients(meal.ingredients || []);
+
+    if (items.length > 0) {
+      dispatch(addToCart(items));
+      setCartMessage(`${meal.mealType} ingredients added to cart`);
+    }
+  }
+
+  function handleBackToUserInput() {
+    navigate("/user-input", {
+      state: { editSavedProfile: true },
+    });
+  }
+
   return (
     <main className="result-page">
       <section className="page-shell result-shell">
         <section className="result-card glass-card">
           <div className="result-topbar">
-            <div>
+            <div className="result-topbar-copy">
               <p className="result-kicker">Dietify Results</p>
               <h1>Your personalized nutrition plan</h1>
               <p className="result-subtitle">
@@ -205,10 +211,18 @@ export default function Result() {
             <div className="result-topbar-actions">
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="result-top-action"
                 onClick={() => navigate("/cart")}
               >
                 View Cart ({totalCartItems})
+              </button>
+
+              <button
+                type="button"
+                className="result-top-action"
+                onClick={handleBackToUserInput}
+              >
+                Back
               </button>
             </div>
           </div>
@@ -283,14 +297,6 @@ export default function Result() {
                         <h3>{selectedDayData.day}</h3>
                         <p>Daily target: {selectedDayData.dailyCalories} kcal</p>
                       </div>
-
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => navigate("/cart")}
-                      >
-                        Open Shopping Cart
-                      </button>
                     </div>
 
                     <div className="meal-grid">
@@ -338,6 +344,18 @@ export default function Result() {
             ) : (
               <p>No weekly meal plan available yet.</p>
             )}
+          </section>
+
+          <section className="result-section result-cart-section">
+            <div className="result-cart-cta-wrap">
+              <button
+                type="button"
+                className="result-cart-cta"
+                onClick={() => navigate("/cart")}
+              >
+                Open Shopping Cart
+              </button>
+            </div>
           </section>
 
           <section className="result-section">

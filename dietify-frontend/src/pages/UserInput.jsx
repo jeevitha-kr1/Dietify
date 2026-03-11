@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import { onboardingQuestions } from "../data/onboardingQuestions";
 import { setUserProfile, clearUserProfile } from "../store/slices/userSlice";
@@ -33,6 +33,7 @@ const DEFAULT_ANSWERS = {
 export default function UserInput() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser } = useAuth();
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -82,13 +83,18 @@ export default function UserInput() {
 
       setAnswers(mergedAnswers);
 
-      if (isProfileComplete(mergedAnswers)) {
+      const wantsEditMode = location.state?.editSavedProfile === true;
+
+      if (isProfileComplete(mergedAnswers) && !wantsEditMode) {
         setShowSavedProfileCard(true);
+      } else {
+        setShowSavedProfileCard(false);
+        setIsEditingSavedAnswers(wantsEditMode);
       }
     } catch (loadError) {
       console.error("Failed to load saved answers:", loadError);
     }
-  }, [storageKey]);
+  }, [storageKey, location.state]);
 
   const saveAnswersLocally = (data) => {
     if (!storageKey) return;
@@ -138,24 +144,30 @@ export default function UserInput() {
   };
 
   const validateCurrentStep = () => {
+    if (!currentQuestion) return false;
+
     const value = answers[currentQuestion.id];
 
-    if (currentQuestion.required) {
-      if (Array.isArray(value) && value.length === 0) {
-        setError("Please select at least one option before continuing.");
-        return false;
-      }
-
-      if (
-        !Array.isArray(value) &&
-        (value === "" || value === null || value === undefined)
-      ) {
-        setError("Please answer this question before continuing.");
-        return false;
+    if (currentQuestion.required === true) {
+      if (Array.isArray(value)) {
+        if (value.length === 0) {
+          setError("Please select at least one option before continuing.");
+          return false;
+        }
+      } else {
+        if (
+          value === "" ||
+          value === null ||
+          value === undefined ||
+          String(value).trim() === ""
+        ) {
+          setError("Please answer this question before continuing.");
+          return false;
+        }
       }
     }
 
-    if (currentQuestion.id === "age" && value !== "") {
+    if (currentQuestion.id === "age" && String(value).trim() !== "") {
       const age = Number(value);
       if (Number.isNaN(age) || age < 16 || age > 100) {
         setError("Age must be between 16 and 100.");
@@ -163,7 +175,7 @@ export default function UserInput() {
       }
     }
 
-    if (currentQuestion.id === "height" && value !== "") {
+    if (currentQuestion.id === "height" && String(value).trim() !== "") {
       const height = Number(value);
       if (Number.isNaN(height) || height < 100 || height > 250) {
         setError("Height must be between 100 cm and 250 cm.");
@@ -171,7 +183,7 @@ export default function UserInput() {
       }
     }
 
-    if (currentQuestion.id === "weight" && value !== "") {
+    if (currentQuestion.id === "weight" && String(value).trim() !== "") {
       const weight = Number(value);
       if (Number.isNaN(weight) || weight < 30 || weight > 300) {
         setError("Weight must be between 30 kg and 300 kg.");
@@ -179,7 +191,7 @@ export default function UserInput() {
       }
     }
 
-    if (currentQuestion.id === "targetWeight" && value !== "") {
+    if (currentQuestion.id === "targetWeight" && String(value).trim() !== "") {
       const targetWeight = Number(value);
       if (Number.isNaN(targetWeight) || targetWeight < 30 || targetWeight > 300) {
         setError("Target weight must be between 30 kg and 300 kg.");
@@ -187,7 +199,7 @@ export default function UserInput() {
       }
     }
 
-    if (currentQuestion.id === "mealsPerDay" && value !== "") {
+    if (currentQuestion.id === "mealsPerDay" && String(value).trim() !== "") {
       const mealsPerDay = Number(value);
       if (Number.isNaN(mealsPerDay) || mealsPerDay < 1 || mealsPerDay > 8) {
         setError("Meals per day must be between 1 and 8.");
@@ -207,7 +219,9 @@ export default function UserInput() {
   };
 
   const handleNext = () => {
-    if (!validateCurrentStep()) return;
+    const isValid = validateCurrentStep();
+
+    if (!isValid) return;
 
     if (currentStep < onboardingQuestions.length - 1) {
       setCurrentStep((previous) => previous + 1);
@@ -216,22 +230,25 @@ export default function UserInput() {
   };
 
   const handleSkip = () => {
-    if (!currentQuestion.required && currentStep < onboardingQuestions.length - 1) {
+    if (currentQuestion.required === true) {
+      setError("This question is required and cannot be skipped.");
+      return;
+    }
+
+    if (currentStep < onboardingQuestions.length - 1) {
       setCurrentStep((previous) => previous + 1);
       setError("");
     }
   };
 
-  const handleFinish = () => {
-    if (!validateCurrentStep()) return;
-
+  const buildAndSaveResults = () => {
     saveAnswersLocally(answers);
     dispatch(setUserProfile(answers));
 
     const bmi = calculateBMI(answers.height, answers.weight);
     const bmiCategory = getBMICategory(bmi);
     const calories = calculateDailyCalories(answers);
-    const macros = calculateMacros(calories, answers.goal);
+    const macros = calculateMacros(calories, answers);
 
     dispatch(
       setResults({
@@ -241,27 +258,19 @@ export default function UserInput() {
         macros,
       })
     );
+  };
 
+  const handleFinish = () => {
+    const isValid = validateCurrentStep();
+
+    if (!isValid) return;
+
+    buildAndSaveResults();
     navigate("/result");
   };
 
   const handleContinueWithSavedAnswers = () => {
-    dispatch(setUserProfile(answers));
-
-    const bmi = calculateBMI(answers.height, answers.weight);
-    const bmiCategory = getBMICategory(bmi);
-    const calories = calculateDailyCalories(answers);
-    const macros = calculateMacros(calories, answers.goal);
-
-    dispatch(
-      setResults({
-        bmi,
-        bmiCategory,
-        calories,
-        macros,
-      })
-    );
-
+    buildAndSaveResults();
     navigate("/result");
   };
 
@@ -417,7 +426,7 @@ export default function UserInput() {
           <div className="userinput-main">
             <h1 className="userinput-title">{currentQuestion.label}</h1>
             <p className="userinput-helper">
-              {currentQuestion.required ? "Required" : ""}
+              {currentQuestion.required ? "Required" : "Optional"}
             </p>
 
             <div className="userinput-field-wrap">{renderQuestionField()}</div>
@@ -434,7 +443,8 @@ export default function UserInput() {
                 Back
               </button>
 
-              {!currentQuestion.required && currentStep !== onboardingQuestions.length - 1 && currentStep !== 8 ? (
+              {!currentQuestion.required &&
+              currentStep !== onboardingQuestions.length - 1 ? (
                 <button type="button" className="btn btn-ghost" onClick={handleSkip}>
                   Skip
                 </button>
