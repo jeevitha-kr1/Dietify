@@ -70,26 +70,21 @@ export default function UserInput() {
 
   try {
     const wantsReset = location.state?.reset === true;
+    const wantsEditMode = location.state?.editSavedProfile === true;
+    
+    window.history.replaceState({}, document.title);
 
     if (wantsReset) {
       setAnswers(DEFAULT_ANSWERS);
       setCurrentStep(0);
-      return; // ✅ stop here, don't load saved answers
+      return;
     }
 
     const savedAnswersRaw = localStorage.getItem(storageKey);
-
     if (!savedAnswersRaw) return;
 
     const savedAnswers = JSON.parse(savedAnswersRaw);
-    const mergedAnswers = {
-      ...DEFAULT_ANSWERS,
-      ...savedAnswers,
-    };
-
-    setAnswers(mergedAnswers);
-
-    const wantsEditMode = location.state?.editSavedProfile === true;
+    setAnswers({ ...DEFAULT_ANSWERS, ...savedAnswers });
 
     if (wantsEditMode) {
       setCurrentStep(0);
