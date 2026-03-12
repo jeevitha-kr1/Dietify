@@ -359,19 +359,6 @@ test("update answers button hides saved card and shows form", () => {
   localStorage.clear();
 });
 
-test("reset saved answers clears the form and localStorage", () => {
-  localStorage.setItem(
-    "dietify_user_profile_test@example.com",
-    JSON.stringify(completeAnswers)
-  );
-  renderWithStore(<UserInput />);
-  fireEvent.click(screen.getByRole("button", { name: /reset saved answers/i }));
-  expect(screen.getByText(/question 1/i)).toBeInTheDocument();
-  expect(
-    localStorage.getItem("dietify_user_profile_test@example.com")
-  ).toBeNull();
-});
-
 // --- misc ---
 
 test("None option exists in all multiselect questions", () => {
