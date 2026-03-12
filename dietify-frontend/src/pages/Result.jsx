@@ -204,15 +204,14 @@ export default function Result() {
 
 function handleResetSelections() {
   setShowBackModal(false);
-  if (storageKey) {
-    localStorage.removeItem(storageKey);
-  }
-  navigate("/user-input", { state: { reset: true } });
   dispatch(clearUserProfile());
   dispatch(clearResults());
   dispatch(clearCart());
   dispatch(clearAiData());
-  
+  if (storageKey) {
+    localStorage.removeItem(storageKey);
+  }
+  navigate("/user-input", { state: { reset: true } });
 }
 
   return (
