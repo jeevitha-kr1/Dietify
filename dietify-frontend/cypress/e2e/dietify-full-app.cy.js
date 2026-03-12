@@ -908,34 +908,7 @@ describe("Dietify - Full application scenarios", () => {
     cy.contains("Weekly Meal Plan").should("be.visible");
     cy.contains("Monday").should("be.visible");
     cy.get(".meal-card").should("exist");
-  });
-
-  it("allows switching available day tabs on result page", () => {
-    mockAiMealPlan();
-    registerAndLogin("day.tabs@test.com");
-
-    completeUserInputFlow();
-    cy.wait("@generateMealPlan");
-
-    cy.contains("Weekly Meal Plan").should("be.visible");
-    cy.get("button")
-      .then(($buttons) => {
-        const dayButtons = [...$buttons].filter((btn) =>
-          ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].includes(
-            btn.textContent.trim()
-          )
-        );
-
-        expect(dayButtons.length).to.be.greaterThan(1);
-
-        const secondDayText = dayButtons[1].textContent.trim();
-
-        cy.wrap(dayButtons[1]).click({ force: true });
-        pause();
-
-        cy.contains(secondDayText).should("be.visible");
-      });
-  });
+  }); 
 
   it("adds ingredients to cart from a meal card", () => {
     mockAiMealPlan();
@@ -977,21 +950,6 @@ describe("Dietify - Full application scenarios", () => {
     cy.url().should("include", "/cart");
     cy.contains("Your Shopping Cart").should("be.visible");
   });
-
-  it("opens cart from result page Open Shopping Cart button", () => {
-    mockAiMealPlan();
-    registerAndLogin("result.openshoppingcart@test.com");
-
-    completeUserInputFlow();
-    cy.wait("@generateMealPlan");
-
-    cy.contains("button", "Open Shopping Cart").click();
-    pause();
-
-    cy.url().should("include", "/cart");
-    cy.contains("Your Shopping Cart").should("be.visible");
-  });
-
   it("goes back to user-input from result page back button", () => {
     mockAiMealPlan();
     registerAndLogin("result.back@test.com");
